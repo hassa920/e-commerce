@@ -1,0 +1,216 @@
+/* ── Page ── */
+
+.payment-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background: #fafafa;
+}
+
+.payment-card {
+    background: #fff;
+    border: 1px solid #f0ece8;
+    border-radius: 18px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Header ── */
+
+.payment-header {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.payment-icon {
+    font-size: 40px;
+    margin-bottom: 0.5rem;
+}
+
+.payment-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.payment-subtitle {
+    font-size: 13px;
+    color: #999;
+    line-height: 1.5;
+}
+
+/* ── Account Box ── */
+
+.payment-account-box {
+    background: #fff8f5;
+    border: 1.5px solid #f0ece8;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.account-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.account-label {
+    font-size: 13px;
+    color: #888;
+    font-weight: 500;
+}
+
+.account-number {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f85606;
+    letter-spacing: 0.03em;
+}
+
+.account-divider {
+    height: 1px;
+    background: #f0ece8;
+    margin: 6px 0;
+}
+
+/* ── Upload ── */
+
+.upload-section {
+    margin-bottom: 1.5rem;
+}
+
+.upload-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+.upload-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 2px dashed #f0ece8;
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafafa;
+    min-height: 140px;
+}
+
+.upload-dropzone:hover {
+    border-color: #f85606;
+    background: #fff8f5;
+}
+
+.upload-dropzone-icon {
+    font-size: 32px;
+}
+
+.upload-dropzone-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+.upload-dropzone-sub {
+    font-size: 11px;
+    color: #bbb;
+}
+
+.upload-preview {
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.upload-input-hidden {
+    display: none;
+}
+
+.upload-filename {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* ── Button ── */
+
+.payment-submit-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background: #f85606;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.payment-submit-btn:hover:not(:disabled) {
+    background: #c44200;
+}
+
+.payment-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Note ── */
+
+.payment-note {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 1rem;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 480px) {
+    .payment-card {
+        padding: 2rem 1.25rem;
+    }
+
+    .payment-title {
+        font-size: 19px;
+    }
+
+    .account-number {
+        font-size: 14px;
+    }
+}

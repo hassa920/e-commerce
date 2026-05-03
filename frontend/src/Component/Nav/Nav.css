@@ -1,0 +1,192 @@
+
+
+/* Logo */
+.logo{
+ width: 45px;
+  position: absolute;
+  top: 23px;
+  left: 10px;
+  border-radius: 50%;
+    z-index: 200; /* VERY IMPORTANT */
+
+}
+
+/* Navbar */
+.nav-ul {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  margin: 0;
+
+
+  top: 0;
+  z-index: 100;
+
+  /* Daraz style gradient */
+  background: linear-gradient(90deg, #f85606, #ff7a00);
+
+  /* Premium feel */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+   position: relative;
+  min-height: 60px;
+  padding: 15px 25px 15px 80px
+}
+
+/* Nav items */
+.nav-ul li {
+  margin: 0 15px;
+}
+
+/* Links */
+.nav-ul li a {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.nav-ul li a:hover {
+  color: #ffe0cc;
+  transform: translateY(-1px);
+}
+
+/* Search bar */
+.nav-search {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 30px;
+  overflow: hidden;
+  width: 45%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.nav-search input {
+  border: none;
+  outline: none;
+  padding: 10px 15px;
+  width: 100%;
+  font-size: 14px;
+}
+
+.nav-search button {
+  border: none;
+  background: #f85606;
+  color: white;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.nav-search button:hover {
+  background: #d94e05;
+}
+
+/* Icons */
+.nav-icons {
+  display: flex;
+  align-items: center;
+}
+
+.cart {
+  font-size: 22px;
+  cursor: pointer;
+  margin-left: 15px;
+  color: white;
+  transition: 0.3s;
+}
+
+.cart:hover {
+  transform: scale(1.2);
+}
+
+/* Right align */
+.nav-right {
+  justify-content: flex-end;
+}
+
+/* Wrapper for navbar */
+.nav-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+/* Default navbar (your existing style stays same) */
+.nav-ul {
+  transition: all 0.3s ease;
+}
+
+/* 🔥 SCROLLED STATE (Glass + shadow + shrink) */
+.nav-wrapper.scrolled .nav-ul {
+  min-height: 50px;
+  padding: 10px 25px 10px 80px;
+
+  background: rgba(248, 86, 6, 0.75); /* glass orange */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+}
+
+/* 🔥 Logo animation */
+.logo {
+  transition: all 0.3s ease;
+}
+
+/* Shrink logo on scroll */
+.logo.logo-small {
+  width: 35px !important;
+  top: 15px !important;
+}
+
+/* ========================= */
+/* 📱 Responsive Design */
+/* ========================= */
+@media (max-width: 992px) {
+  .nav-search {
+    width: 60%;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-ul {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 15px;
+  }
+
+  .nav-search {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .nav-ul li {
+    margin: 10px 0;
+    text-align: center;
+  }
+
+  .nav-icons {
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .cart {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-search input {
+    font-size: 12px;
+  }
+
+  .nav-search button {
+    padding: 8px 12px;
+  }
+}
