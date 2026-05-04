@@ -18,7 +18,8 @@ const port = process.env.PORT || 8000;
 
 const allowedOrigins = [
   "https://deploy-mern-frontend-delta.vercel.app",
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "https://qu6.netlify.app"
 ];
 
 app.use(cors({
