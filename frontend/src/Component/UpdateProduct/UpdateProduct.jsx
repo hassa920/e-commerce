@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './UpdateProduct.css';
-import { useParams,useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import BASE_URL from '../../api';
 
 const initialForm = { name: "", price: "", company: "", category: "" };
@@ -12,7 +12,8 @@ const UpdateProduct = () => {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const { id } = useParams();
-    const navigate=useNavigate();
+    const navigate = useNavigate();
+
     const getLoggedInUser = () => {
         try {
             return JSON.parse(localStorage.getItem("user"));
@@ -52,10 +53,9 @@ const UpdateProduct = () => {
 
     const getProductDetails = async () => {
         try {
-            const res = await axios.get(`${BASE_URL}/product/${id}`); // ✅ Using BASE_URL
+            const res = await axios.get(`${BASE_URL}/product/${id}`);
             if (res.data?.success) {
                 const data = res.data.data;
-                // ✅ Pre-fill the form with existing product data
                 setForm({
                     name: data.name || "",
                     price: data.price || "",
@@ -70,57 +70,74 @@ const UpdateProduct = () => {
         }
     };
 
-  const handleSubmit = async () => {
-  if (!validate()) return;
+    const handleSubmit = async () => {
+        if (!validate()) return;
 
-  const user = getLoggedInUser();
-  const userId = user?._id;
+        const user = getLoggedInUser();
+        const userId = user?._id;
 
-  if (!userId) {
-    alert("You must be logged in to update a product.");
-    return;
-  }
+        if (!userId) {
+            alert("You must be logged in to update a product.");
+            return;
+        }
 
-  try {
-    setLoading(true);
+        // ✅ Get token
+        const token = localStorage.getItem("token");
 
-    if (image) {
-      // ✅ New image selected — send as FormData (multipart)
-      const formData = new FormData();
-      formData.append("name", form.name);
-      formData.append("price", form.price);
-      formData.append("category", form.category);
-      formData.append("company", form.company);
-      formData.append("userId", userId);
-      formData.append("image", image);
+        if (!token) {
+            alert("Session expired. Please login again.");
+            navigate("/login");
+            return;
+        }
 
-      await axios.put(`${BASE_URL}/product/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+        try {
+            setLoading(true);
 
-    } else {
-      // ✅ No new image — send plain JSON, backend keeps existing image
-      await axios.put(`${BASE_URL}/product/${id}`, {
-        name: form.name,
-        price: form.price,
-        category: form.category,
-        company: form.company,
-        userId,
-      });
-    }
+            if (image) {
+                // ✅ New image — send as FormData
+                const formData = new FormData();
+                formData.append("name", form.name);
+                formData.append("price", form.price);
+                formData.append("category", form.category);
+                formData.append("company", form.company);
+                formData.append("userId", userId);
+                formData.append("image", image);
 
-    alert("Product Updated Successfully");
-    navigate("/");
-    setImage(null);
-    setErrors({});
+                await axios.put(`${BASE_URL}/product/${id}`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`, // ✅ Token added
+                        // ❌ Do NOT set Content-Type for FormData — axios handles it
+                    },
+                });
 
-  } catch (err) {
-    console.error("Update product failed:", err);
-    alert(err?.response?.data?.message || "Error occurred while updating product");
-  } finally {
-    setLoading(false);
-  }
-};
+            } else {
+                // ✅ No new image — send JSON
+                await axios.put(`${BASE_URL}/product/${id}`, {
+                    name: form.name,
+                    price: form.price,
+                    category: form.category,
+                    company: form.company,
+                    userId,
+                }, {
+                    headers: {
+                        Authorization: `Bearer ${token}`, // ✅ Token added
+                        "Content-Type": "application/json",
+                    },
+                });
+            }
+
+            alert("Product Updated Successfully");
+            navigate("/");
+            setImage(null);
+            setErrors({});
+
+        } catch (err) {
+            console.error("Update product failed:", err);
+            alert(err?.response?.data?.message || "Error occurred while updating product");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fields = [
         { name: "name", placeholder: "Product name" },
