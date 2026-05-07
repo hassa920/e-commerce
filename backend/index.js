@@ -8,7 +8,7 @@ import User from "./db/User.js";
 import Product from "./db/Product.js";
 import Cart from "./db/Cart.js";
 import Order from "./db/Order.js";
-import Upload from "./middleware/upload.js";
+import Upload, { PaymentUpload } from "./middleware/upload.js";
 import { isAdmin } from "./middleware/isAdmin.js";
 import { verifyTokenMiddleWare } from "./middleware/verifyTokenMiddleWare.js";
 
@@ -49,6 +49,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// ❌ FIX #1 (IMPORTANT): DO NOT disable uploads
 app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {
@@ -154,6 +155,7 @@ app.post(
   isAdmin,
   Upload.single("image"),
   async (req, res) => {
+    console.log("FILE:", req.file);
     try {
       const product = await Product.create({
         ...req.body,
@@ -222,134 +224,12 @@ app.delete(
 // ================= CART =================
 app.get("/cart", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ userId: req.user._id }).populate(
-      "items.productId"
-    );
-
+    const cart = await Cart.findOne({ userId: req.user._id }).populate("items.productId");
     res.json({ success: true, data: cart?.items || [] });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
-app.post("/cart/add", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const { productId, quantity = 1 } = req.body;
-
-    let cart = await Cart.findOne({ userId: req.user._id });
-
-    if (!cart) {
-      cart = await Cart.create({
-        userId: req.user._id,
-        items: [{ productId, quantity }],
-      });
-    } else {
-      const item = cart.items.find(
-        (i) => i.productId.toString() === productId
-      );
-
-      if (item) item.quantity += quantity;
-      else cart.items.push({ productId, quantity });
-
-      await cart.save();
-    }
-
-    res.json({ success: true, data: cart });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-app.delete("/cart/remove/:productId", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const cart = await Cart.findOne({ userId: req.user._id });
-
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
-
-    cart.items = cart.items.filter(
-      (i) => i.productId.toString() !== req.params.productId
-    );
-
-    await cart.save();
-
-    res.json({ success: true, data: cart.items });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-app.delete("/cart/clear", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    await Cart.findOneAndDelete({ userId: req.user._id });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ================= UPDATE CART QUANTITY =================
-app.put("/cart/update/:productId", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const { quantity } = req.body;
-
-    if (!quantity || quantity < 1) {
-      return res.status(400).json({ message: "Invalid quantity" });
-    }
-
-    let cart = await Cart.findOne({ userId: req.user._id });
-
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
-
-    const item = cart.items.find(
-      (i) => i.productId.toString() === req.params.productId
-    );
-
-    if (!item) return res.status(404).json({ message: "Item not found in cart" });
-
-    item.quantity = quantity;
-    await cart.save();
-
-    res.json({ success: true, message: "Quantity updated", data: cart });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ================= UPLOAD PAYMENT SCREENSHOT =================
-app.post(
-  "/order/upload-payment/:id",
-  verifyTokenMiddleWare,
-  Upload.single("image"),
-  async (req, res) => {
-    try {
-      const order = await Order.findById(req.params.id);
-
-      if (!order) {
-        return res.status(404).json({ success: false, message: "Order not found" });
-      }
-
-      if (order.userId.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ success: false, message: "Not allowed" });
-      }
-
-      order.paymentScreenshot = req.file
-        ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
-        : "";
-
-      order.paymentStatus = "submitted";
-      order.notifications.push({
-        message: "Payment screenshot uploaded",
-        type: "payment",
-      });
-
-      await order.save();
-
-      res.json({ success: true, message: "Payment uploaded successfully", data: order });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  }
-);
 
 // ================= ORDERS =================
 app.get("/admin/orders", verifyTokenMiddleWare, isAdmin, async (req, res) => {
@@ -370,111 +250,36 @@ app.get("/my-orders", verifyTokenMiddleWare, async (req, res) => {
   }
 });
 
-// ================= USER PROFILE =================
-app.get("/user/profile", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select("-password");
-
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    res.json({ success: true, data: user });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-app.put("/user/profile", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const { name, phone, address } = req.body;
-
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { name, phone, address },
-      { new: true }
-    ).select("-password");
-
-    res.json({ success: true, data: user });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ================= CHECKOUT =================
-app.post("/order/checkout", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const { paymentMethod } = req.body;
-
-    const cart = await Cart.findOne({ userId: req.user._id }).populate(
-      "items.productId"
-    );
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" });
-    }
-
-    const orderItems = cart.items.map((item) => ({
-      productId: item.productId._id,
-      quantity: item.quantity,
-      price: item.productId.price,
-    }));
-
-    const totalAmount = orderItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-
-    const order = await Order.create({
-      userId: req.user._id,
-      items: orderItems,
-      totalAmount,
-      paymentMethod: paymentMethod || "COD",
-      status: "pending",
-      paymentStatus: "pending",
-      notifications: [{ message: "Order placed successfully", type: "order" }],
-    });
-
-    await Cart.findOneAndDelete({ userId: req.user._id });
-
-    res.json({ success: true, data: order });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ================= ADMIN PAYMENT APPROVAL =================
-app.put(
-  "/admin/order/payment/:id",
+// ================= PAYMENT UPLOAD (FIXED) =================
+app.post(
+  "/order/upload-payment/:id",
   verifyTokenMiddleWare,
-  isAdmin,
+  PaymentUpload.single("image"),
   async (req, res) => {
+    console.log("FILE:", req.file);
     try {
-      const { action } = req.body;
       const order = await Order.findById(req.params.id);
 
       if (!order) {
-        return res.status(404).json({ success: false, message: "Order not found" });
+        return res.status(404).json({ message: "Order not found" });
       }
 
-      if (action === "approve") {
-        order.paymentStatus = "paid";
-        order.status = "processing";
-        order.notifications.push({ message: "Payment approved by admin", type: "payment" });
+      if (order.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: "Not allowed" });
       }
 
-      if (action === "reject") {
-        order.paymentStatus = "failed";
-        order.status = "cancelled";
-        order.notifications.push({ message: "Payment rejected by admin", type: "payment" });
-      }
+      // ✅ FIX: Cloudinary URL saved directly
+      order.paymentScreenshot = req.file?.path;
+
+      order.paymentStatus = "submitted";
 
       await order.save();
 
-      res.json({ success: true, message: `Payment ${action}ed`, data: order });
+      res.json({ success: true, data: order });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
   }
 );
 
-// ================= EXPORT FOR VERCEL =================
 export default app;

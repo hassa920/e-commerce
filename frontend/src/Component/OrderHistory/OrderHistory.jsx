@@ -59,7 +59,6 @@ const OrderHistory = () => {
     <div className="oh-page">
       <h1 className="oh-title">My Orders</h1>
 
-      {/* EMPTY STATE */}
       {orders.length === 0 ? (
         <div className="oh-empty">
           <div className="oh-empty-icon">📦</div>
@@ -78,7 +77,7 @@ const OrderHistory = () => {
 
             return (
               <div className="oh-card" key={order._id}>
-                
+
                 {/* HEADER */}
                 <div className="oh-card-header">
                   <div>
@@ -113,9 +112,6 @@ const OrderHistory = () => {
                 <div className="oh-items">
                   {order.items?.map((item, i) => (
                     <div className="oh-item" key={i}>
-                      
-                   
-
                       <div className="oh-item-info">
                         <p className="oh-item-name">
                           {item.productId?.name || "Product"}
@@ -130,13 +126,12 @@ const OrderHistory = () => {
                   ))}
                 </div>
 
-                {/* PAYMENT SCREENSHOT (NEW FIX) */}
+                {/* PAYMENT SCREENSHOT (FIXED) */}
                 {order.paymentScreenshot && (
                   <div className="oh-screenshot">
-                    <p className="oh-screenshot-label" style={{marginLeft:"20px"}}>
+                    <p className="oh-screenshot-label" style={{ marginLeft: "20px" }}>
                       Payment Proof
                     </p>
-
                     <img
                       src={order.paymentScreenshot}
                       alt="payment proof"

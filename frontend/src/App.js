@@ -41,7 +41,11 @@ function App() {
           <div className="main-content">
             <Routes>
 
-              {/* USER */}
+              {/* PUBLIC */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
+
+              {/* PRIVATE USER ROUTES */}
               <Route element={<PrivateComponent />}>
                 <Route path="/" element={<ProductList />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
@@ -50,21 +54,16 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/payment/:id" element={<PaymentPage />} />
                 <Route path="/notifications" element={<Notifications />} />
-
-                {/* ADMIN */}
-                <Route element={<AdminRoute />}>
-                <Route path="/" element={<ProductList />} />
-                  <Route path="/add" element={<AddProduct />} />
-                  <Route path="/update/:id" element={<UpdateProduct />} />
-                  <Route path="/admin/orders" element={<AdminOrders />} />
-                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                </Route>
-
               </Route>
 
-              {/* PUBLIC */}
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/login" element={<Login />} />
+              {/* ADMIN ROUTES */}
+              <Route element={<AdminRoute />}>
+                <Route path="/add" element={<AddProduct />} />
+                <Route path="/update/:id" element={<UpdateProduct />} />
+                <Route path="/admin/orders" element={<AdminOrders />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              </Route>
+
               <Route path="*" element={<Navigate to="/" />} />
 
             </Routes>

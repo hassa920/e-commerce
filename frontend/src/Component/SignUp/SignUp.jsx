@@ -166,11 +166,11 @@ const SignUp = () => {
               />
             </div>
 
-            <button onClick={collectData} className="appButton">
+            <button onClick={collectData} >
               Create Account
             </button>
 
-            <p className="login-link">
+            <p className="link">
               Already have an account?
               <span onClick={() => navigate("/login")}> Login</span>
             </p>

@@ -105,46 +105,99 @@ const AddProduct = () => {
     }
   };
 
-  const fields = [
-    { name: 'name', placeholder: 'Product name', type: 'text' },
-    { name: 'price', placeholder: 'Price', type: 'number' },
-    { name: 'category', placeholder: 'Category', type: 'text' },
-    { name: 'company', placeholder: 'Company', type: 'text' },
-    { name: 'stock', placeholder: 'Stock (optional)', type: 'number' }
-  ];
-
   return (
     <div className="addProduct">
       <h1>Add Product</h1>
 
       <div className="auth-container">
 
-        {fields.map(f => (
-          <div key={f.name}>
-            <input
-              type={f.type}
-              name={f.name}
-              value={form[f.name]}
-              onChange={handleChange}
-              placeholder={f.placeholder}
-              className={`inputBox ${errors[f.name] ? 'error' : ''}`}
-            />
-            {errors[f.name] && <p className="errorText">{errors[f.name]}</p>}
-          </div>
-        ))}
+        {/* NAME */}
+        <div className="form-group">
+          <label className="form-label">Product Name</label>
+          <input
+            type="text"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Enter product name"
+            className="inputBox"
+          />
+          {errors.name && <p className="errorText">{errors.name}</p>}
+        </div>
 
-        {/* Description */}
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Description"
-          className="inputBox textarea"
-          rows={3}
-        />
+        {/* PRICE */}
+        <div className="form-group">
+          <label className="form-label">Price</label>
+          <input
+            type="number"
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            placeholder="Enter price"
+            className="inputBox"
+          />
+          {errors.price && <p className="errorText">{errors.price}</p>}
+        </div>
 
-        {/* Image Upload */}
-        <div>
+        {/* CATEGORY */}
+        <div className="form-group">
+          <label className="form-label">Category</label>
+          <input
+            type="text"
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            placeholder="Enter category"
+            className="inputBox"
+          />
+          {errors.category && <p className="errorText">{errors.category}</p>}
+        </div>
+
+        {/* COMPANY */}
+        <div className="form-group">
+          <label className="form-label">Company</label>
+          <input
+            type="text"
+            name="company"
+            value={form.company}
+            onChange={handleChange}
+            placeholder="Enter company"
+            className="inputBox"
+          />
+          {errors.company && <p className="errorText">{errors.company}</p>}
+        </div>
+
+        {/* STOCK */}
+        <div className="form-group">
+          <label className="form-label">Stock (Optional)</label>
+          <input
+            type="number"
+            name="stock"
+            value={form.stock}
+            onChange={handleChange}
+            placeholder="Enter stock"
+            className="inputBox"
+          />
+          {errors.stock && <p className="errorText">{errors.stock}</p>}
+        </div>
+
+        {/* DESCRIPTION */}
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Enter description"
+            className="inputBox textarea"
+            rows={3}
+          />
+        </div>
+
+        {/* IMAGE */}
+        <div className="form-group">
+          <label className="form-label">Product Image</label>
+
           <label htmlFor="img" className="img-upload-label">
             {preview ? (
               <img src={preview} alt="preview" className="img-preview" />
@@ -164,7 +217,8 @@ const AddProduct = () => {
           {errors.image && <p className="errorText">{errors.image}</p>}
         </div>
 
-        <button onClick={handleSubmit} disabled={loading} className="appButton">
+        {/* BUTTON */}
+        <button onClick={handleSubmit} disabled={loading}>
           {loading ? 'Adding...' : 'Add Product'}
         </button>
 

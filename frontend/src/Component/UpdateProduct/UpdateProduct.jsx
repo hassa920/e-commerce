@@ -113,44 +113,66 @@ const UpdateProduct = () => {
       <h1>Update Product</h1>
 
       <div className="auth-container">
-        <input
-          className="inputBox"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Name"
-        />
 
-        <input
-          className="inputBox"
-          name="price"
-          value={form.price}
-          onChange={handleChange}
-          placeholder="Price"
-        />
+        {/* NAME */}
+        <div className="form-group">
+          <label className="form-label">Product Name</label>
+          <input
+            className="inputBox"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Enter product name"
+          />
+        </div>
 
-        <input
-          className="inputBox"
-          name="company"
-          value={form.company}
-          onChange={handleChange}
-          placeholder="Company"
-        />
+        {/* PRICE */}
+        <div className="form-group">
+          <label className="form-label">Price</label>
+          <input
+            className="inputBox"
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            placeholder="Enter price"
+          />
+        </div>
 
-        <input
-          className="inputBox"
-          name="category"
-          value={form.category}
-          onChange={handleChange}
-          placeholder="Category"
-        />
+        {/* COMPANY */}
+        <div className="form-group">
+          <label className="form-label">Company</label>
+          <input
+            className="inputBox"
+            name="company"
+            value={form.company}
+            onChange={handleChange}
+            placeholder="Enter company"
+          />
+        </div>
 
-        <input
-          className="inputBox"
-          type="file"
-          onChange={(e) => setImage(e.target.files[0])}
-        />
+        {/* CATEGORY */}
+        <div className="form-group">
+          <label className="form-label">Category</label>
+          <input
+            className="inputBox"
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            placeholder="Enter category"
+          />
+        </div>
 
+        {/* IMAGE */}
+        <div className="form-group">
+          <label className="form-label">Update Image</label>
+          <input
+            className="inputBox"
+            type="file"
+            onChange={(e) => setImage(e.target.files[0])}
+          />
+        </div>
+
+        {/* UPDATE BUTTON */}
         <button
           className="appButton"
           onClick={handleUpdate}
@@ -159,14 +181,15 @@ const UpdateProduct = () => {
           {loading ? "Updating..." : "Update Product"}
         </button>
 
-        {/* 🔥 DELETE BUTTON */}
+        {/* DELETE BUTTON */}
         <button
           className="appButton"
-          style={{ background: "red" }}
+          style={{ background: "red", marginTop: "1px" }}
           onClick={handleDelete}
         >
           Delete Product
         </button>
+
       </div>
     </div>
   );

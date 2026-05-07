@@ -137,3 +137,20 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   }
 }
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 14px;
+  width: 100%;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f85606; /* Daraz orange */
+  letter-spacing: 0.3px;
+  text-align: left;
+  width: 100%;
+}

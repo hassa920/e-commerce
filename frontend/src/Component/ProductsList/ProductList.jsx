@@ -25,45 +25,35 @@ const ProductList = () => {
   const getAuthHeader = () =>
     token ? { Authorization: `Bearer ${token}` } : {};
 
-  // ================= GET PRODUCTS =================
   const getProducts = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${BASE_URL}/products`);
       setProductList(res.data?.data || []);
-    } catch (err) {
+    } catch {
       setProductList([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // ================= ADD TO CART =================
   const handleAddToCart = async (productId) => {
     try {
-      if (!token) {
-        show("Please login first", "error");
-        return;
-      }
+      if (!token) return show("Please login first", "error");
 
       await axios.post(
         `${BASE_URL}/cart/add`,
         { productId, quantity: 1 },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       window.dispatchEvent(new Event("cartUpdated"));
       show("Added to cart!", "success");
     } catch (err) {
-      show(err?.response?.data?.message || "Failed to add", "error");
+      show(err?.response?.data?.message || "Failed", "error");
     }
   };
 
-  // ================= DELETE PRODUCT =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
 
@@ -75,7 +65,7 @@ const ProductList = () => {
       show("Deleted successfully", "success");
       getProducts();
     } catch (err) {
-      show(err?.response?.data?.message || "Delete failed", "error");
+      show("Delete failed", "error");
     }
   };
 
@@ -83,25 +73,21 @@ const ProductList = () => {
     getProducts();
   }, []);
 
-  if (loading)
-    return (
-      <h2 style={{ textAlign: "center", marginTop: "60px" }}>
-        Loading...
-      </h2>
-    );
+  if (loading) return <h2 className="loading-text">Loading...</h2>;
 
   return (
     <div className="product-page">
-      <h1 className="page-title">Products</h1>
+
+      <h1 className="page-title">🛍 Products</h1>
 
       <div className="product-grid">
+
         {products.length === 0 ? (
           <p className="no-products">No products found</p>
         ) : (
           products.map((product) => (
             <div className="product-card" key={product._id}>
 
-              {/* IMAGE */}
               <Link to={`/product/${product._id}`} className="card-image-link">
                 <div className="card-image-wrapper">
                   <img
@@ -112,21 +98,18 @@ const ProductList = () => {
                 </div>
               </Link>
 
-              {/* BODY */}
               <div className="card-body">
-                <Link
-                  to={`/product/${product._id}`}
-                  className="product-name-link"
-                >
+
+                <Link to={`/product/${product._id}`} className="product-name-link">
                   <p className="product-name">{product.name}</p>
                 </Link>
 
                 <p className="product-meta">
-                  {product.company} · {product.category}
+                  {product.company} • {product.category}
                 </p>
 
                 <p className="product-price">
-                  Rs. {Number(product.price).toLocaleString()}
+                  Rs {Number(product.price).toLocaleString()}
                 </p>
 
                 <span
@@ -136,12 +119,11 @@ const ProductList = () => {
                 >
                   {product.stock > 0 ? "In Stock" : "Out of Stock"}
                 </span>
+
               </div>
 
-              {/* ACTIONS */}
               <div className="card-actions">
 
-                {/* USER */}
                 {user?.role !== "admin" && (
                   <button
                     className="btn btn-cart"
@@ -151,7 +133,6 @@ const ProductList = () => {
                   </button>
                 )}
 
-                {/* ADMIN */}
                 {user?.role === "admin" && (
                   <>
                     <Link
@@ -165,15 +146,17 @@ const ProductList = () => {
                       className="btn btn-delete"
                       onClick={() => handleDelete(product._id)}
                     >
-                      🗑️ Delete
+                      🗑 Delete
                     </button>
                   </>
                 )}
 
               </div>
+
             </div>
           ))
         )}
+
       </div>
     </div>
   );

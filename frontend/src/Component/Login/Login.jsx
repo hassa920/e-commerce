@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Login.css";
+import './Login.css'
 import BASE_URL from "../../api";
 
 const Login = () => {
@@ -108,23 +108,25 @@ const Login = () => {
       <div className="login-right">
 
         <div className="login-card">
+            <div className="auth-container">
           <h2>Welcome back</h2>
           <p className="muted">Login to continue shopping</p>
-
+           
           {/* EMAIL */}
-          <div className="field">
-            <label>Email</label>
+          <div className="field-group">
+            <label >Email</label>
             <input
               type="text"
               name="email"
               placeholder="you@example.com"
               value={form.email}
               onChange={handleChange}
+              className="inputBox"
             />
           </div>
 
           {/* PASSWORD */}
-          <div className="field">
+          <div className="field-group">
             <label>Password</label>
             <input
               type="password"
@@ -132,25 +134,25 @@ const Login = () => {
               placeholder="••••••••"
               value={form.password}
               onChange={handleChange}
+              className="inputBox"
             />
           </div>
-
+     
           {/* LOGIN BUTTON */}
-          <button onClick={handleLogin} className="login-btn">
+          <button onClick={handleLogin}>
             Sign in
           </button>
 
           {/* ✅ SIGNUP OPTION (ADDED) */}
-          <div className="signup-link">
-            Don’t have an account?
-            <span onClick={() => navigate("/signup")}>
-              Sign up
-            </span>
-          </div>
+        <p className="link">
+              Don't have an account?
+              <span onClick={() => navigate("/signup")}> Sign up</span>
+            </p>
 
           <p className="footer-text">
             Secure login protected with encrypted authentication
           </p>
+          </div>
         </div>
 
       </div>
