@@ -5,12 +5,13 @@
   margin: 40px auto;
   padding: 0 20px 60px;
   font-family: 'Outfit', sans-serif;
+  
 }
-.addProduct h1 { font-size: 24px; font-weight: 700; color: #111; margin: 0 0 24px; }
+.addProduct h1 { font-size: 24px; font-weight: 700; color: #111; margin-top: 10px; }
 
 .auth-container { display: flex; flex-direction: column; gap: 14px; }
 
-.inputBox {
+.addProduct .inputBox {
   width: 100%;
   padding: 11px 14px;
   border: 1.5px solid #e0e0e0;
@@ -22,6 +23,12 @@
   transition: border-color 0.2s;
   background: #fff;
   color: #111;
+    pointer-events: all !important;
+  cursor: text !important;
+
+  z-index: 1 !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
 }
 .inputBox:focus { border-color: #111; }
 .inputBox.error { border-color: #ef4444; }
@@ -62,3 +69,12 @@
 }
 .appButton:hover    { filter: brightness(1.2); }
 .appButton:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ── Input fix ── */
+.addProduct .inputBox {
+
+}
+
+/* .addProduct .auth-container {
+  max-width: 300px !important;
+  margin: 0 !important;
+} */
