@@ -21,7 +21,6 @@ const AddProduct = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // ✅ SAFE USER PARSE
   let storedUser = null;
   try {
     storedUser = JSON.parse(localStorage.getItem('user'));
@@ -63,7 +62,6 @@ const AddProduct = () => {
   const handleSubmit = async () => {
     if (!validate()) return;
 
-    // 🔥 FIX: correct auth check
     if (!user || !token) {
       show('You must be logged in', 'error');
       return;
@@ -97,7 +95,6 @@ const AddProduct = () => {
 
     } catch (err) {
       console.log(err?.response?.data || err.message);
-
       show(
         err?.response?.data?.message ||
         'Failed to add product (check login or admin access)',
@@ -146,9 +143,9 @@ const AddProduct = () => {
           rows={3}
         />
 
-        {/* Image */}
+        {/* Image Upload */}
         <div>
-          <label htmlFor="img">
+          <label htmlFor="img" className="img-upload-label">
             {preview ? (
               <img src={preview} alt="preview" className="img-preview" />
             ) : (
@@ -161,7 +158,7 @@ const AddProduct = () => {
             type="file"
             accept="image/*"
             onChange={handleImageChange}
-            hidden
+            className="hidden-file-input"
           />
 
           {errors.image && <p className="errorText">{errors.image}</p>}
