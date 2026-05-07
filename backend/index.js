@@ -18,6 +18,9 @@ dotenv.config();
 const app = express();
 
 // ================= CORS =================
+const app = express();
+
+// ================= CORS =================
 app.use(
   cors({
     origin: [
@@ -31,17 +34,10 @@ app.use(
   })
 );
 
+// ================= PREFLIGHT — MUST BE BEFORE EVERYTHING =================
+app.options("*", cors());
+
 app.use(express.json());
-
-// ================= PREFLIGHT OPTIONS =================
-app.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.sendStatus(200);
-});
-
 // ================= REQUEST LOGGER =================
 app.use((req, res, next) => {
   console.log("➡️", req.method, req.url);
