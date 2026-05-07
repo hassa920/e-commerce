@@ -1,15 +1,15 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './SignUp.css';
-import BASE_URL from '../../api';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./SignUp.css";
+import BASE_URL from "../../api";
 
 const SignUp = () => {
   const [form, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    adminKey: ""   // 👑 OPTIONAL (for admin signup)
+    adminKey: "",
   });
 
   const navigate = useNavigate();
@@ -40,103 +40,145 @@ const SignUp = () => {
           name,
           email,
           password,
-          adminKey   // 👑 sent only if filled
+          adminKey,
         },
-        { headers: { "Content-Type": "application/json" } }
+        {
+          headers: { "Content-Type": "application/json" },
+        }
       );
 
       const result = response?.data;
+      const token = result?.token || result?.auth;
 
-      // ❌ If registration failed
-      if (!result || !result.auth) {
-        alert("Registration failed. Please try again.");
+      if (!result || !token) {
+        alert("Registration failed");
         return;
       }
 
-      // ✅ Save user
-      localStorage.setItem("user", JSON.stringify(result.user));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          token: token,
+          user: result.user,
+        })
+      );
 
-      // ✅ Save token (IMPORTANT: no JSON.stringify)
-      localStorage.setItem("token", result.auth);
-
-      // 👑 AUTO REDIRECT BASED ON ROLE
       if (result.user.role === "admin") {
-        navigate("/admin");
+        navigate("/admin/dashboard");
       } else {
         navigate("/");
       }
-
     } catch (err) {
-      console.error("Register error:", err);
-      const message = err?.response?.data?.message || "Registration failed";
-      alert(message); // Will now show "Invalid admin key" or "An admin already exists"
+      const message =
+        err?.response?.data?.message || "Registration failed";
+      alert(message);
     }
   };
 
   return (
-    <div className='register'>
-      <h1 style={{ marginLeft: "25px" }}>Register</h1>
+    <div className="register-page">
 
-      <div className='auth-container'>
+      {/* LEFT INFO PANEL */}
+      <div className="register-left">
+        <div className="brand">⚡ QuickCommerce</div>
 
-        <div className="field-group">
-          <label className="field-label">Name</label>
-          <input
-            className='inputBox'
-            type='text'
-            name='name'
-            placeholder='Enter Name'
-            value={form.name}
-            onChange={handleChange}
-          />
+        <h1>Create your account</h1>
+
+        <p className="subtitle">
+          Start your journey with fast, secure, and reliable online shopping.
+        </p>
+
+        {/* USP */}
+        <div className="usp-box">
+          <h3>Why choose us</h3>
+          <ul>
+            <li>⚡ Fast checkout</li>
+            <li>🔒 Secure payments</li>
+            <li>📦 Reliable delivery</li>
+            <li>📊 Smooth order tracking</li>
+          </ul>
         </div>
 
-        <div className="field-group">
-          <label className="field-label">Email</label>
-          <input
-            className='inputBox'
-            type='text'
-            name='email'
-            placeholder='Enter Email'
-            value={form.email}
-            onChange={handleChange}
-          />
+        {/* ICP */}
+        <div className="icp-box">
+          <h3>Perfect for</h3>
+          <p>Students • Small Business Owners • Online Shoppers</p>
         </div>
 
-        <div className="field-group">
-          <label className="field-label">Password</label>
-          <input
-            className='inputBox'
-            type='password'
-            name='password'
-            placeholder='Enter Password'
-            value={form.password}
-            onChange={handleChange}
-          />
+        <div className="trust">
+          ✔ Trusted by hundreds of users across Pakistan
         </div>
-
-        {/* 👑 OPTIONAL ADMIN KEY FIELD */}
-        <div className="field-group">
-          <label className="field-label">Admin Key (optional)</label>
-          <input
-            className='inputBox'
-            type='text'
-            name='adminKey'
-            placeholder='Enter Admin Key (only for admin signup)'
-            value={form.adminKey}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button
-          onClick={collectData}
-          type='button'
-          className='appButton'
-        >
-          Sign Up
-        </button>
-
       </div>
+
+      {/* RIGHT FORM */}
+      <div className="register-right">
+        <div className="register">
+
+          <h1>Sign Up</h1>
+
+          <div className="auth-container">
+
+            <div className="field-group">
+              <label>Name</label>
+              <input
+                className="inputBox"
+                type="text"
+                name="name"
+                placeholder="Your name"
+                value={form.name}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="field-group">
+              <label>Email</label>
+              <input
+                className="inputBox"
+                type="text"
+                name="email"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="field-group">
+              <label>Password</label>
+              <input
+                className="inputBox"
+                type="password"
+                name="password"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="field-group">
+              <label>Admin Key (optional)</label>
+              <input
+                className="inputBox"
+                type="text"
+                name="adminKey"
+                placeholder="Enter admin key"
+                value={form.adminKey}
+                onChange={handleChange}
+              />
+            </div>
+
+            <button onClick={collectData} className="appButton">
+              Create Account
+            </button>
+
+            <p className="login-link">
+              Already have an account?
+              <span onClick={() => navigate("/login")}> Login</span>
+            </p>
+
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

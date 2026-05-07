@@ -1,4 +1,3 @@
-// pages/PaymentPage/PaymentPage.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -7,23 +6,39 @@ import "./PaymentPage.css";
 
 const PaymentPage = () => {
   const { id } = useParams();
+
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
+  // ✅ SAFE TOKEN (IMPORTANT FIX)
+  let token = null;
+
+  try {
+    const stored = JSON.parse(localStorage.getItem("user"));
+    token = stored?.token;
+  } catch {
+    token = null;
+  }
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0];
     setFile(selected);
+
     if (selected) {
       setPreview(URL.createObjectURL(selected));
     }
   };
 
+  // ================= UPLOAD =================
   const handleUpload = async () => {
     if (!file) {
       alert("Please select a screenshot");
+      return;
+    }
+
+    if (!token) {
+      alert("Please login first");
       return;
     }
 
@@ -33,19 +48,28 @@ const PaymentPage = () => {
       const formData = new FormData();
       formData.append("image", file);
 
-      await axios.post(
+      const res = await axios.post(
         `${BASE_URL}/order/upload-payment/${id}`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      alert("Payment submitted! Wait for admin approval.");
+      console.log("UPLOAD RESPONSE:", res.data);
+
+      alert("✅ Payment submitted! Wait for admin approval.");
+      setFile(null);
+      setPreview(null);
+
     } catch (err) {
-      alert("Upload failed");
+      console.log("UPLOAD ERROR:", err?.response?.data || err.message);
+      alert(
+        err?.response?.data?.message || "Upload failed (check backend)"
+      );
     } finally {
       setLoading(false);
     }
@@ -56,78 +80,66 @@ const PaymentPage = () => {
 
       <div className="payment-card">
 
-        {/* ── Header ── */}
+        {/* HEADER */}
         <div className="payment-header">
           <div className="payment-icon">💳</div>
           <h2 className="payment-title">Manual Payment</h2>
           <p className="payment-subtitle">
-            Send payment to the account below and upload your screenshot
+            Send payment and upload screenshot
           </p>
         </div>
 
-        {/* ── Account Info ── */}
+        {/* ACCOUNT INFO */}
         <div className="payment-account-box">
           <div className="account-row">
-            <span className="account-label">📱 JazzCash</span>
-            <span className="account-number">0300-1234567</span>
+            <span>📱 JazzCash</span>
+            <span>0300-1234567</span>
           </div>
+
           <div className="account-divider" />
+
           <div className="account-row">
-            <span className="account-label">💚 Easypaisa</span>
-            <span className="account-number">0300-1234567</span>
+            <span>💚 Easypaisa</span>
+            <span>0300-1234567</span>
           </div>
         </div>
 
-        {/* ── Upload Area ── */}
+        {/* UPLOAD */}
         <div className="upload-section">
-          <p className="upload-label">Upload Payment Screenshot</p>
 
-          <label className="upload-dropzone" htmlFor="screenshot-input">
+          <label htmlFor="file" className="upload-dropzone">
             {preview ? (
-              <img src={preview} alt="Preview" className="upload-preview" />
+              <img src={preview} alt="preview" className="upload-preview" />
             ) : (
               <>
-                <span className="upload-dropzone-icon">📁</span>
-                <span className="upload-dropzone-text">
-                  Click to select screenshot
-                </span>
-                <span className="upload-dropzone-sub">
-                  JPG, PNG, JPEG supported
-                </span>
+                <span>📁</span>
+                <p>Click to upload screenshot</p>
               </>
             )}
           </label>
 
           <input
-            id="screenshot-input"
+            id="file"
             type="file"
             accept="image/*"
             onChange={handleFileChange}
-            className="upload-input-hidden"
+            hidden
           />
 
-          {file && (
-            <p className="upload-filename">📎 {file.name}</p>
-          )}
+          {file && <p className="upload-filename">{file.name}</p>}
         </div>
 
-        {/* ── Submit Button ── */}
+        {/* BUTTON */}
         <button
-          className={`payment-submit-btn ${loading ? "loading" : ""}`}
+          className="payment-submit-btn"
           onClick={handleUpload}
           disabled={loading}
         >
-          {loading ? (
-            <>
-              <span className="spinner" /> Uploading...
-            </>
-          ) : (
-            "Submit Payment"
-          )}
+          {loading ? "Uploading..." : "Submit Payment"}
         </button>
 
         <p className="payment-note">
-          ⏳ Your order will be confirmed after admin approval
+          Your order will be reviewed by admin
         </p>
 
       </div>

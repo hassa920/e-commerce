@@ -1,27 +1,32 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import BASE_URL from "../../api";
-import "./Nav.css";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import BASE_URL from '../../api';
+import './Nav.css';
 
 const Nav = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const auth = localStorage.getItem("user");
-  const user = auth ? JSON.parse(auth) : null;
-  const token = localStorage.getItem("token");
+  let storedUser = null;
+  try {
+    storedUser = JSON.parse(localStorage.getItem('user'));
+  } catch {
+    storedUser = null;
+  }
 
-  // ================= SCROLL =================
+  const user = storedUser?.user;
+  const token = storedUser?.token;
+
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // ================= CART =================
   const fetchCartCount = useCallback(async () => {
     if (!token) return;
     try {
@@ -29,105 +34,100 @@ const Nav = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const items = res.data?.data || [];
-      const totalQty = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-      setCartCount(totalQty);
+      setCartCount(items.reduce((s, i) => s + (i.quantity || 0), 0));
     } catch {
       setCartCount(0);
     }
   }, [token]);
 
-  // ================= NOTIFICATIONS COUNT (from backend) =================
-  const fetchNotifCount = useCallback(async () => {
-    if (!token || user?.role !== "user") return;
-    try {
-      const res = await axios.get(`${BASE_URL}/my-notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const notifications = res.data?.data || [];
-
-      // ✅ Count only unread — compare against last seen timestamp in localStorage
-      const lastSeen = localStorage.getItem(`notif_last_seen_${user._id}`) || "1970-01-01";
-      const unread = notifications.filter(
-        (n) => new Date(n.createdAt) > new Date(lastSeen)
-      );
-
-      setNotifCount(unread.length);
-    } catch {
-      setNotifCount(0);
-    }
-  }, [token, user?.role, user?._id]);
-
-  // ================= AUTO REFRESH =================
   useEffect(() => {
     fetchCartCount();
-    fetchNotifCount();
-
-    window.addEventListener("cartUpdated", fetchCartCount);
-
-    // ✅ Poll backend every 5 seconds for new notifications
-    const interval = setInterval(fetchNotifCount, 5000);
-
-    return () => {
-      window.removeEventListener("cartUpdated", fetchCartCount);
-      clearInterval(interval);
-    };
-  }, [fetchCartCount, fetchNotifCount]);
+  }, [fetchCartCount]);
 
   const logOut = () => {
-    localStorage.clear();
-    navigate("/login");
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
+    navigate('/login');
   };
 
-  // ================= MARK AS READ =================
-  const handleNotifClick = () => {
-    // ✅ Save current timestamp so next poll shows 0 unread
-    if (user?._id) {
-      localStorage.setItem(`notif_last_seen_${user._id}`, new Date().toISOString());
-      setNotifCount(0);
-    }
-  };
+  const close = () => setMenuOpen(false);
 
   return (
-    <div className={`nav-wrapper ${scrolled ? "scrolled" : ""}`}>
+    <header className={`nav-wrapper ${scrolled ? 'scrolled' : ''}`}>
+
+      {/* BRAND */}
+      <div className="nav-brand">
+        <span className="nav-logo">⚡ QuickCommerce</span>
+        <span className="nav-subtitle">Fast • Secure • Reliable Shopping</span>
+      </div>
+
+      {/* HAMBURGER */}
+      <button
+        className={`nav-hamburger ${menuOpen ? 'open' : ''}`}
+        onClick={() => setMenuOpen(v => !v)}
+      >
+        <span></span><span></span><span></span>
+      </button>
+
+      {/* MENU */}
       {user ? (
-        <ul className="nav-ul">
-          <li><Link to="/">Products</Link></li>
+        <nav className={`nav-menu ${menuOpen ? 'nav-open' : ''}`}>
 
-          {user?.role === "user" && (
-            <li>
-              <Link to="/cart">🛒 Cart ({cartCount})</Link>
-            </li>
-          )}
+          <Link to="/" onClick={close} className="nav-link">
+            🛍 Products
+          </Link>
 
-          {user?.role === "user" && (
-            <li>
-              <Link to="/notifications" onClick={handleNotifClick}>
-                🔔 Notifications {notifCount > 0 && `(${notifCount})`}
-              </Link>
-            </li>
-          )}
-
-          {user?.role === "admin" && (
+          {user.role === 'user' && (
             <>
-              <li><Link to="/add">Add Product</Link></li>
-              <li><Link to="/admin/orders">Orders</Link></li>
+              <Link to="/cart" onClick={close} className="nav-link">
+                🛒 Cart <span className="nav-badge">{cartCount}</span>
+              </Link>
+
+              <Link to="/orders" onClick={close} className="nav-link">
+                📦 Orders
+              </Link>
             </>
           )}
 
-          <li>
-            <Link to="/login" onClick={logOut}>
-              Logout ({user?.name})
-            </Link>
-          </li>
-        </ul>
+          {user.role === 'admin' && (
+            <>
+              <Link to="/add" onClick={close} className="nav-link">
+                ➕ Add Product
+              </Link>
+
+              <Link to="/admin/orders" onClick={close} className="nav-link">
+                📋 Orders
+              </Link>
+
+              <Link to="/admin/dashboard" onClick={close} className="nav-link">
+                📊 Dashboard
+              </Link>
+            </>
+          )}
+
+          <Link to="/profile" onClick={close} className="nav-link">
+            👤 {user?.name}
+          </Link>
+
+          <button className="nav-logout-btn" onClick={logOut}>
+            Logout
+          </button>
+        </nav>
       ) : (
-        <ul className="nav-ul nav-right">
-          <li><Link to="/signup">Sign Up</Link></li>
-          <li><Link to="/login">Login</Link></li>
-        </ul>
+        <nav className={`nav-menu ${menuOpen ? 'nav-open' : ''}`}>
+
+          <Link to="/signup" onClick={close} className="nav-link">
+            Create Account
+          </Link>
+
+          <Link to="/login" onClick={close} className="nav-link primary">
+            Sign In
+          </Link>
+
+        </nav>
       )}
-    </div>
+    </header>
   );
 };
 
-export default Nav;
+export default Nav

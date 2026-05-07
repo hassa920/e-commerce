@@ -1,194 +1,175 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import './UpdateProduct.css';
-import { useParams, useNavigate } from 'react-router-dom';
-import BASE_URL from '../../api';
-
-const initialForm = { name: "", price: "", company: "", category: "" };
+import React, { useEffect, useState, useCallback } from "react";
+import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
+import BASE_URL from "../../api";
+import "./UpdateProduct.css";
 
 const UpdateProduct = () => {
-    const [form, setForm] = useState(initialForm);
-    const [image, setImage] = useState(null);
-    const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
-    const { id } = useParams();
-    const navigate = useNavigate();
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    company: "",
+    category: "",
+  });
 
-    const getLoggedInUser = () => {
-        try {
-            return JSON.parse(localStorage.getItem("user"));
-        } catch {
-            return null;
-        }
-    };
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-    };
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-    const handleImageChange = (e) => {
-        setImage(e.target.files[0] || null);
-        setErrors((prev) => ({ ...prev, image: "" }));
-    };
+  let token = null;
 
-    const validate = () => {
-        const newErrors = {};
-        if (!form.name.trim()) newErrors.name = "Product name is required";
-        if (!form.price.toString().trim()) newErrors.price = "Price is required";
-        else if (isNaN(Number(form.price))) newErrors.price = "Price must be a number";
-        if (!form.category.trim()) newErrors.category = "Category is required";
-        if (!form.company.trim()) newErrors.company = "Company is required";
+  try {
+    const stored = JSON.parse(localStorage.getItem("user"));
+    token = stored?.token;
+  } catch {
+    token = null;
+  }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-    useEffect(() => {
-        if (id) {
-            getProductDetails();
-        }
-    }, [id]);
+  const fetchProduct = useCallback(async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/product/${id}`);
 
-    const getProductDetails = async () => {
-        try {
-            const res = await axios.get(`${BASE_URL}/product/${id}`);
-            if (res.data?.success) {
-                const data = res.data.data;
-                setForm({
-                    name: data.name || "",
-                    price: data.price || "",
-                    category: data.category || "",
-                    company: data.company || "",
-                });
-            } else {
-                console.warn("Product not found");
-            }
-        } catch (err) {
-            console.error("Error:", err?.response?.data?.message || err.message);
-        }
-    };
+      if (res.data?.data) {
+        setForm(res.data.data);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }, [id]);
 
-    const handleSubmit = async () => {
-        if (!validate()) return;
+  useEffect(() => {
+    if (id) fetchProduct();
+  }, [id, fetchProduct]);
 
-        const user = getLoggedInUser();
-        const userId = user?._id;
+  // ================= UPDATE =================
+  const handleUpdate = async () => {
+    if (!token) {
+      alert("Login required");
+      navigate("/login");
+      return;
+    }
 
-        if (!userId) {
-            alert("You must be logged in to update a product.");
-            return;
-        }
+    try {
+      setLoading(true);
 
-        // ✅ Get token
-        const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("price", form.price);
+      formData.append("company", form.company);
+      formData.append("category", form.category);
 
-        if (!token) {
-            alert("Session expired. Please login again.");
-            navigate("/login");
-            return;
-        }
+      if (image) {
+        formData.append("image", image);
+      }
 
-        try {
-            setLoading(true);
+      await axios.put(`${BASE_URL}/product/${id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-            if (image) {
-                // ✅ New image — send as FormData
-                const formData = new FormData();
-                formData.append("name", form.name);
-                formData.append("price", form.price);
-                formData.append("category", form.category);
-                formData.append("company", form.company);
-                formData.append("userId", userId);
-                formData.append("image", image);
+      alert("Updated successfully");
+      navigate("/");
+    } catch (err) {
+      alert(err?.response?.data?.message || "Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                await axios.put(`${BASE_URL}/product/${id}`, formData, {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // ✅ Token added
-                        // ❌ Do NOT set Content-Type for FormData — axios handles it
-                    },
-                });
+  // ================= DELETE =================
+  const handleDelete = async () => {
+    if (!token) {
+      alert("Login required");
+      navigate("/login");
+      return;
+    }
 
-            } else {
-                // ✅ No new image — send JSON
-                await axios.put(`${BASE_URL}/product/${id}`, {
-                    name: form.name,
-                    price: form.price,
-                    category: form.category,
-                    company: form.company,
-                    userId,
-                }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // ✅ Token added
-                        "Content-Type": "application/json",
-                    },
-                });
-            }
+    const confirmDelete = window.confirm("Are you sure you want to delete this product?");
+    if (!confirmDelete) return;
 
-            alert("Product Updated Successfully");
-            navigate("/");
-            setImage(null);
-            setErrors({});
+    try {
+      await axios.delete(`${BASE_URL}/product/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        } catch (err) {
-            console.error("Update product failed:", err);
-            alert(err?.response?.data?.message || "Error occurred while updating product");
-        } finally {
-            setLoading(false);
-        }
-    };
+      alert("Product deleted");
+      navigate("/");
+    } catch (err) {
+      alert(err?.response?.data?.message || "Delete failed");
+    }
+  };
 
-    const fields = [
-        { name: "name", placeholder: "Product name" },
-        { name: "price", placeholder: "Price" },
-        { name: "category", placeholder: "Category" },
-        { name: "company", placeholder: "Company" },
-    ];
+  return (
+    <div className="addProduct">
+      <h1>Update Product</h1>
 
-    return (
-        <div className="addProduct">
-            <h1>Update Product</h1>
-            <div className="auth-container">
+      <div className="auth-container">
+        <input
+          className="inputBox"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
 
-                {fields.map((f) => (
-                    <div key={f.name}>
-                        <input
-                            type="text"
-                            name={f.name}
-                            value={form[f.name]}
-                            onChange={handleChange}
-                            placeholder={f.placeholder}
-                            className={`inputBox ${errors[f.name] ? "error" : ""}`}
-                        />
-                        {errors[f.name] && (
-                            <p className="errorText">{errors[f.name]}</p>
-                        )}
-                    </div>
-                ))}
+        <input
+          className="inputBox"
+          name="price"
+          value={form.price}
+          onChange={handleChange}
+          placeholder="Price"
+        />
 
-                <div>
-                    <input
-                        type="file"
-                        onChange={handleImageChange}
-                        className={`inputBox ${errors.image ? "error" : ""}`}
-                    />
-                    {errors.image && (
-                        <p className="errorText">{errors.image}</p>
-                    )}
-                </div>
+        <input
+          className="inputBox"
+          name="company"
+          value={form.company}
+          onChange={handleChange}
+          placeholder="Company"
+        />
 
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="appButton"
-                >
-                    {loading ? "Updating..." : "Update Product"}
-                </button>
+        <input
+          className="inputBox"
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          placeholder="Category"
+        />
 
-            </div>
-        </div>
-    );
+        <input
+          className="inputBox"
+          type="file"
+          onChange={(e) => setImage(e.target.files[0])}
+        />
+
+        <button
+          className="appButton"
+          onClick={handleUpdate}
+          disabled={loading}
+        >
+          {loading ? "Updating..." : "Update Product"}
+        </button>
+
+        {/* 🔥 DELETE BUTTON */}
+        <button
+          className="appButton"
+          style={{ background: "red" }}
+          onClick={handleDelete}
+        >
+          Delete Product
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default UpdateProduct;

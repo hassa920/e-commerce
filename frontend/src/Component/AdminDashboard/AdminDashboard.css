@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+.dash-page    { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; font-family: 'Outfit', sans-serif; }
+.dash-title   { font-size: 26px; font-weight: 700; color: #111; margin: 0 0 24px; }
+.dash-loading { text-align: center; padding: 80px 0; color: #888; font-family: 'Outfit', sans-serif; }
+
+/* ── Stat cards ── */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+.stat-card {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 12px;
+  padding: 18px 18px 14px;
+}
+.stat-card.pending  { border-left: 4px solid #f59e0b; }
+.stat-card.approved { border-left: 4px solid #22c55e; }
+.stat-card.rejected { border-left: 4px solid #ef4444; }
+
+.stat-label { font-size: 12px; color: #888; font-weight: 500; margin: 0 0 6px; }
+.stat-value { font-size: 22px; font-weight: 700; color: #111; margin: 0; }
+
+/* ── Section ── */
+.dash-section        { }
+.dash-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.dash-section-header h2 { font-size: 16px; font-weight: 600; color: #111; margin: 0; }
+.dash-see-all { font-size: 13px; color: #555; text-decoration: none; font-weight: 500; }
+.dash-see-all:hover { color: #111; }
+
+/* ── Table ── */
+.dash-table-wrap { overflow-x: auto; border: 1px solid #ebebeb; border-radius: 12px; }
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 520px;
+}
+.dash-table th {
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #fafafa;
+  border-bottom: 1px solid #ebebeb;
+}
+.dash-table td {
+  padding: 12px 14px;
+  color: #333;
+  border-bottom: 1px solid #f4f4f4;
+}
+.dash-table tr:last-child td { border-bottom: none; }
+.order-id { font-weight: 700; color: #111; font-size: 13px; }
+
+/* ── Status pill ── */
+.dash-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+.dash-pending  { background: #fef9c3; color: #854d0e; }
+.dash-paid     { background: #dcfce7; color: #166534; }
+.dash-rejected { background: #fee2e2; color: #991b1b; }
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .dash-stats { grid-template-columns: repeat(2, 1fr); }
+}

@@ -1,58 +1,48 @@
-import express from 'express'
-import cors from 'cors'
-import './db/config.js'
-import User from './db/User.js'
-import Product from './db/Product.js'
-import Upload from './middleware/upload.js'
-import mongoose from 'mongoose'
-import { isAdmin } from './middleware/isAdmin.js'
-import { verifyTokenMiddleWare } from './middleware/verifyTokenMiddleWare.js'
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-import Cart from './db/Cart.js'
-import Order from './db/Order.js'
-import bcrypt from 'bcryptjs';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+
+import "./db/config.js";
+import User from "./db/User.js";
+import Product from "./db/Product.js";
+import Cart from "./db/Cart.js";
+import Order from "./db/Order.js";
+import Upload from "./middleware/upload.js";
+import { isAdmin } from "./middleware/isAdmin.js";
+import { verifyTokenMiddleWare } from "./middleware/verifyTokenMiddleWare.js";
+
 dotenv.config();
+
 const app = express();
 const port = process.env.PORT || 8000;
 
-const allowedOrigins = [
-  "https://deploy-mern-frontend-delta.vercel.app",
-  "http://localhost:3000",
-  "https://qu6.netlify.app"
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, origin);
-    } else {
-      return callback(new Error("CORS not allowed for: " + origin));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+// ================= CORS =================
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
 
-// ==================== ROUTES ====================
-
-// ✅ Public — no auth needed
-app.get("/", (req, res) => {
-  res.send("API is working");
+// ================= REQUEST LOGGER (DEBUG) =================
+app.use((req, res, next) => {
+  console.log("➡️", req.method, req.url);
+  next();
 });
-
-// ✅ Public — anyone can register or login
-
-
-
+app.use("/uploads", express.static("uploads"));
+// ================= REGISTER =================
 app.post("/register", async (req, res) => {
-  console.log("REGISTER API HIT");
   try {
     const { name, email, password, adminKey } = req.body;
+
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ message: "User exists" });
 
     let role = "user";
 
@@ -60,122 +50,106 @@ app.post("/register", async (req, res) => {
       if (adminKey !== process.env.ADMIN_SECRET) {
         return res.status(403).json({ message: "Invalid admin key" });
       }
-      const existingAdmin = await User.findOne({ role: "admin" });
-      if (existingAdmin) {
-        return res.status(400).json({ message: "An admin already exists" });
-      }
       role = "admin";
     }
 
-    // ✅ Hash password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-    let user = await User.create({ name, email, password: hashedPassword, role });
-    let userObj = user.toObject();
-    delete userObj.password;
+    const user = await User.create({
+      name,
+      email,
+      password: hashed,
+      role,
+    });
 
-    const token = jwt.sign(
-      { user: { _id: userObj._id, role: userObj.role } },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    return res.status(201).json({ auth: token, user: userObj });
-
-  } catch (err) {
-    return res.status(400).send({ error: err.message });
-  }
-});
-
-app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ result: "user not found" });
-  }
-
-  try {
-    // ✅ Find by email only — don't include password in query
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ result: "user not found" });
-    }
-
-    // ✅ Compare entered password with hashed password in DB
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(401).json({ result: "Invalid email or password" });
-    }
-
-    // ✅ Remove password from response
     const userObj = user.toObject();
     delete userObj.password;
 
     const token = jwt.sign(
-      { user: { _id: userObj._id, role: userObj.role } },
+      { _id: userObj._id, role: userObj.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    return res.status(200).json({ auth: token, user: userObj });
-
+    res.json({ token, user: userObj });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
-// ✅ Public — anyone can browse products
+
+// ================= LOGIN =================
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    const token = jwt.sign(
+      { _id: userObj._id, role: userObj.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({ token, user: userObj });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ================= PRODUCTS =================
 app.get("/products", async (req, res) => {
   try {
-    const product = await Product.find();
-    return res.status(200).json({
-      success: true,
-      data: product.length ? product : []
-    });
+    const products = await Product.find();
+    res.json({ success: true, data: products });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({ message: err.message });
   }
 });
 
+// ================= SINGLE PRODUCT =================
 app.get("/product/:id", async (req, res) => {
   try {
-    let result = await Product.findById(req.params.id);
-    if (result) {
-      return res.status(200).json({ success: true, data: result });
-    } else {
-      return res.status(404).json({ success: false, message: "Record not found." });
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Not found" });
     }
+
+    res.json({ success: true, data: product });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Invalid ID or server error." });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ Admin only — add, update, delete products
+// ================= ADD PRODUCT =================
 app.post(
   "/add-product",
   verifyTokenMiddleWare,
   isAdmin,
   Upload.single("image"),
   async (req, res) => {
-    const { name, price, category, userId, company } = req.body;
-
-    if (!name || !price || !category || !userId || !company) {
-      return res.status(400).json({ success: false, message: "Required fields are missing" });
-    }
-
     try {
       const product = await Product.create({
-        name, price, category, userId, company,
-        image: req.file ? req.file.path : null
+        ...req.body,
+        image: req.file?.path,
+        userId: req.user._id,
       });
-      return res.status(201).json({ success: true, message: "Product created Successfully", data: product });
+
+      res.status(201).json({ success: true, data: product });
     } catch (err) {
-      return res.status(500).json({ success: false, message: "Internal server error" });
+      res.status(500).json({ message: err.message });
     }
   }
 );
 
+// ================= UPDATE PRODUCT =================
 app.put(
   "/product/:id",
   verifyTokenMiddleWare,
@@ -183,387 +157,366 @@ app.put(
   Upload.single("image"),
   async (req, res) => {
     try {
-      const product = await Product.findById(req.params.id);
-      if (!product) return res.status(404).send({ message: "Product not found" });
-
-      const updatedData = {
-        name: req.body.name,
-        price: req.body.price,
-        category: req.body.category,
-        company: req.body.company,
-        userId: req.body.userId,
-      };
+      const updateData = { ...req.body };
 
       if (req.file) {
-        updatedData.image = req.file.path;
+        updateData.image = req.file.path;
       }
 
-      const updatedProduct = await Product.findByIdAndUpdate(
+      const product = await Product.findByIdAndUpdate(
         req.params.id,
-        { $set: updatedData },
+        updateData,
         { new: true }
       );
 
-      res.status(200).send({ success: true, message: "Product updated successfully", data: updatedProduct });
+      if (!product) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Product not found" });
+      }
+
+      res.json({
+        success: true,
+        message: "Product updated",
+        data: product,
+      });
     } catch (err) {
-      res.status(500).send({ error: err.message });
+      res.status(500).json({ message: err.message });
     }
   }
 );
-
 app.delete(
   "/product/:id",
   verifyTokenMiddleWare,
   isAdmin,
   async (req, res) => {
     try {
-      const id = req.params.id;
+      const product = await Product.findByIdAndDelete(req.params.id);
 
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ success: false, message: "Invalid product ID" });
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
       }
 
-      const result = await Product.findByIdAndDelete(id);
-
-      if (!result) {
-        return res.status(404).json({ success: false, message: "Product not found" });
-      }
-
-      return res.status(200).json({ success: true, message: "Product deleted successfully" });
-    } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
+      res.json({
+        success: true,
+        message: "Product deleted successfully",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
     }
   }
 );
+// ================= CART =================
+app.get("/cart", verifyTokenMiddleWare, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user._id }).populate(
+      "items.productId"
+    );
 
+    res.json({ success: true, data: cart?.items || [] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-// ==================== CART ROUTES ====================
-
-// ✅ Add to cart
 app.post("/cart/add", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const userId = req.user._id;
     const { productId, quantity = 1 } = req.body;
 
-    if (!productId) {
-      return res.status(400).json({ success: false, message: "Product ID is required" });
-    }
-
-    let cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ userId: req.user._id });
 
     if (!cart) {
-      // ✅ No cart yet — create one
       cart = await Cart.create({
-        userId,
-        items: [{ productId, quantity }]
+        userId: req.user._id,
+        items: [{ productId, quantity }],
       });
     } else {
-      // ✅ Cart exists — check if product already in cart
-      const existingItem = cart.items.find(
-        (item) => item.productId.toString() === productId
+      const item = cart.items.find(
+        (i) => i.productId.toString() === productId
       );
 
-      if (existingItem) {
-        // ✅ Already in cart — increase quantity
-        existingItem.quantity += quantity;
-      } else {
-        // ✅ New product — push to items
-        cart.items.push({ productId, quantity });
-      }
+      if (item) item.quantity += quantity;
+      else cart.items.push({ productId, quantity });
 
       await cart.save();
     }
 
-    return res.status(200).json({ success: true, message: "Added to cart", data: cart });
-
+    res.json({ success: true, data: cart });
   } catch (err) {
-    console.error("Add to cart error:", err);
-    return res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ Get cart (populated)
-app.get("/cart", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const cart = await Cart.findOne({ userId }).populate("items.productId");
-
-    if (!cart) {
-      return res.status(200).json({ success: true, data: [] });
-    }
-
-    return res.status(200).json({ success: true, data: cart.items });
-
-  } catch (err) {
-    console.error("Get cart error:", err);
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ✅ Remove item from cart
 app.delete("/cart/remove/:productId", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { productId } = req.params;
+    const cart = await Cart.findOne({ userId: req.user._id });
 
-    const cart = await Cart.findOne({ userId });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    if (!cart) {
-      return res.status(404).json({ success: false, message: "Cart not found" });
-    }
-
-    // ✅ Filter out the removed product
     cart.items = cart.items.filter(
-      (item) => item.productId.toString() !== productId
+      (i) => i.productId.toString() !== req.params.productId
     );
 
     await cart.save();
 
-    return res.status(200).json({ success: true, message: "Item removed", data: cart.items });
-
+    res.json({ success: true, data: cart.items });
   } catch (err) {
-    console.error("Remove from cart error:", err);
-    return res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ Clear entire cart (helper used after checkout)
 app.delete("/cart/clear", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const userId = req.user._id;
-    await Cart.findOneAndDelete({ userId });
-    return res.status(200).json({ success: true, message: "Cart cleared" });
+    await Cart.findOneAndDelete({ userId: req.user._id });
+    res.json({ success: true });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
-
-// ==================== ORDER ROUTES ====================
-
-// ✅ Checkout — create order from cart
-app.post("/order/checkout", verifyTokenMiddleWare, async (req, res) => {
+// ================= UPDATE CART QUANTITY =================
+app.put("/cart/update/:productId", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { paymentMethod = "COD" } = req.body;
+    const { quantity } = req.body;
 
-    // ✅ Get cart with populated product prices
-    const cart = await Cart.findOne({ userId }).populate("items.productId");
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ message: "Invalid quantity" });
     }
 
-    // ✅ Build order items and calculate total
-    let totalAmount = 0;
-    const orderItems = cart.items.map((item) => {
-      const price = item.productId?.price || 0;
-      totalAmount += price * item.quantity;
-      return {
-        productId: item.productId._id,
-        quantity: item.quantity,
-        price
-      };
-    });
+    let cart = await Cart.findOne({ userId: req.user._id });
 
-    // ✅ Create the order
-    const order = await Order.create({
-      userId,
-      items: orderItems,
-      totalAmount,
-      paymentMethod,
-      paymentStatus: paymentMethod === "COD" ? "pending" : "pending",
-      status: "pending",
-      notifications: [
-        {
-          message: `Order placed successfully via ${paymentMethod}`,
-          type: "order_placed"
-        }
-      ]
-    });
-
-    // ✅ Clear cart after order
-    await Cart.findOneAndDelete({ userId });
-
-    // 🔥 Dispatch cart update
-    return res.status(201).json({
-      success: true,
-      message: "Order placed successfully",
-      data: order
-    });
-
-  } catch (err) {
-    console.error("Checkout error:", err);
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ✅ Get all orders (admin)
-app.get("/admin/orders", verifyTokenMiddleWare, isAdmin, async (req, res) => {
-  try {
-    const orders = await Order.find()
-      .populate("userId", "name email")
-      .populate("items.productId", "name price image")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({ success: true, data: orders });
-
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ✅ Get logged-in user's orders
-app.get("/my-orders", verifyTokenMiddleWare, async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const orders = await Order.find({ userId })
-      .populate("items.productId", "name price image")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({ success: true, data: orders });
-
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ✅ Update order status (admin)
-app.patch("/admin/order/:id/status", verifyTokenMiddleWare, isAdmin, async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
     }
 
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: { status },
-        $push: {
-          notifications: {
-            message: `Your order status has been updated to: ${status}`,
-            type: "status_update"
-          }
-        }
-      },
-      { new: true }
+    const item = cart.items.find(
+      (i) => i.productId.toString() === req.params.productId
     );
 
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+    if (!item) {
+      return res.status(404).json({ message: "Item not found in cart" });
     }
 
-    return res.status(200).json({ success: true, message: "Order status updated", data: order });
+    item.quantity = quantity;
 
+    await cart.save();
+
+    res.json({
+      success: true,
+      message: "Quantity updated",
+      data: cart,
+    });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ message: err.message });
+  }
+});
+app.post(
+  "/order/upload-payment/:id",
+  verifyTokenMiddleWare,
+  Upload.single("image"),
+  async (req, res) => {
+    try {
+      const order = await Order.findById(req.params.id);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found",
+        });
+      }
+
+      // ownership check
+      if (order.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Not allowed",
+        });
+      }
+
+      // ✅ FIXED IMAGE URL
+      order.paymentScreenshot = req.file
+        ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+        : "";
+
+      order.paymentStatus = "submitted";
+
+      order.notifications.push({
+        message: "Payment screenshot uploaded",
+        type: "payment",
+      });
+
+      await order.save();
+
+      res.json({
+        success: true,
+        message: "Payment uploaded successfully",
+        data: order,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+// ================= ORDERS =================
+app.get("/admin/orders", verifyTokenMiddleWare, isAdmin, async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: orders });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ Get user notifications (from their orders)
-app.get("/my-notifications", verifyTokenMiddleWare, async (req, res) => {
+app.get("/my-orders", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const userId = req.user._id;
-
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
-
-    // ✅ Flatten all notifications from all orders
-    const notifications = orders.flatMap((order) =>
-      order.notifications.map((n) => ({
-        ...n.toObject(),
-        orderId: order._id,
-        orderStatus: order.status
-      }))
-    ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    return res.status(200).json({ success: true, data: notifications });
-
+    const orders = await Order.find({ userId: req.user._id });
+    res.json({ success: true, data: orders });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
-// ✅ Upload payment screenshot (user)
-app.post("/order/upload-payment/:id", verifyTokenMiddleWare, Upload.single("image"), async (req, res) => {
+// ================= UPLOAD PAYMENT SCREENSHOT =================
+
+app.get("/user/profile", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const user = await User.findById(req.user._id).select("-password");
 
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // ✅ Make sure the order belongs to the logged-in user
-    if (order.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+app.post("/order/checkout", verifyTokenMiddleWare, async (req, res) => {
+  try {
+    const { paymentMethod } = req.body;
+
+    // 1. Get cart
+    const cart = await Cart.findOne({ userId: req.user._id }).populate(
+      "items.productId"
+    );
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "No screenshot uploaded" });
-    }
+    // 2. Format items according to ORDER SCHEMA
+    const orderItems = cart.items.map((item) => ({
+      productId: item.productId._id,
+      quantity: item.quantity,
+      price: item.productId.price,
+    }));
 
-    // ✅ Save Cloudinary URL + update payment status
-    order.paymentScreenshot = req.file.path;
-    order.paymentStatus = "submitted";
+    // 3. Calculate totalAmount
+    const totalAmount = orderItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
-    order.notifications.push({
-      message: "Payment screenshot submitted. Waiting for admin approval.",
-      type: "info"
+    // 4. Create order
+    const order = await Order.create({
+      userId: req.user._id,
+      items: orderItems,
+      totalAmount,
+      paymentMethod: paymentMethod || "COD",
+      status: "pending",
+      paymentStatus: "pending",
+      notifications: [
+        {
+          message: "Order placed successfully",
+          type: "order",
+        },
+      ],
     });
 
-    await order.save();
+    // 5. Clear cart
+    await Cart.findOneAndDelete({ userId: req.user._id });
 
-    return res.status(200).json({ success: true, message: "Payment screenshot uploaded", data: order });
-
+    res.json({
+      success: true,
+      data: order,
+    });
   } catch (err) {
-    console.error("Upload payment error:", err);
-    return res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
-
-// ✅ Approve or reject payment (admin only)
-app.put("/admin/order/payment/:id", verifyTokenMiddleWare, isAdmin, async (req, res) => {
+app.put("/user/profile", verifyTokenMiddleWare, async (req, res) => {
   try {
-    const { action } = req.body; // "approve" or "reject"
+    const { name, phone, address } = req.body;
 
-    if (!["approve", "reject"].includes(action)) {
-      return res.status(400).json({ success: false, message: "Invalid action. Use 'approve' or 'reject'" });
-    }
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, phone, address },
+      { new: true }
+    ).select("-password");
 
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
-    }
-
-    if (action === "approve") {
-      order.paymentStatus = "paid";
-      order.status = "processing";
-      order.notifications.push({
-        message: "Your payment has been approved! Your order is now being processed.",
-        type: "success"
-      });
-    } else {
-      order.paymentStatus = "failed";
-      order.status = "cancelled";
-      order.notifications.push({
-        message: "Your payment was rejected. Please contact support or reorder.",
-        type: "error"
-      });
-    }
-
-    await order.save();
-
-    return res.status(200).json({ success: true, message: `Payment ${action}d successfully`, data: order });
-
+    res.json({
+      success: true,
+      data: user,
+    });
   } catch (err) {
-    console.error("Payment action error:", err);
-    return res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
-// ==================== START SERVER ====================
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+app.put(
+  "/admin/order/payment/:id",
+  verifyTokenMiddleWare,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const { action } = req.body; // approve / reject
+      const order = await Order.findById(req.params.id);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found",
+        });
+      }
+
+      if (action === "approve") {
+        order.paymentStatus = "paid";
+        order.status = "processing";
+
+        order.notifications.push({
+          message: "Payment approved by admin",
+          type: "payment",
+        });
+      }
+
+      if (action === "reject") {
+        order.paymentStatus = "failed";
+        order.status = "cancelled";
+
+        order.notifications.push({
+          message: "Payment rejected by admin",
+          type: "payment",
+        });
+      }
+
+      await order.save();
+
+      res.json({
+        success: true,
+        message: `Payment ${action}ed`,
+        data: order,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+// ================= SERVER =================
+// app.listen(port, () => {
+//   console.log(`🚀 Server running on port ${port}`);
+// });
+
+module.exports = app;

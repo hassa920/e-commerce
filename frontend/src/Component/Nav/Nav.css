@@ -1,192 +1,159 @@
-
-
-/* Logo */
-.logo{
- width: 45px;
-  position: absolute;
-  top: 23px;
-  left: 10px;
-  border-radius: 50%;
-    z-index: 200; /* VERY IMPORTANT */
-
-}
-
-/* Navbar */
-.nav-ul {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  list-style: none;
-  margin: 0;
-
-
-  top: 0;
-  z-index: 100;
-
-  /* Daraz style gradient */
-  background: linear-gradient(90deg, #f85606, #ff7a00);
-
-  /* Premium feel */
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-   position: relative;
-  min-height: 60px;
-  padding: 15px 25px 15px 80px
-}
-
-/* Nav items */
-.nav-ul li {
-  margin: 0 15px;
-}
-
-/* Links */
-.nav-ul li a {
-  text-decoration: none;
-  color: white;
-  font-weight: 500;
-  font-size: 15px;
-  transition: all 0.3s ease;
-}
-
-/* Hover effect */
-.nav-ul li a:hover {
-  color: #ffe0cc;
-  transform: translateY(-1px);
-}
-
-/* Search bar */
-.nav-search {
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 30px;
-  overflow: hidden;
-  width: 45%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.nav-search input {
-  border: none;
-  outline: none;
-  padding: 10px 15px;
-  width: 100%;
-  font-size: 14px;
-}
-
-.nav-search button {
-  border: none;
-  background: #f85606;
-  color: white;
-  padding: 10px 18px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: 0.3s;
-}
-
-.nav-search button:hover {
-  background: #d94e05;
-}
-
-/* Icons */
-.nav-icons {
-  display: flex;
-  align-items: center;
-}
-
-.cart {
-  font-size: 22px;
-  cursor: pointer;
-  margin-left: 15px;
-  color: white;
-  transition: 0.3s;
-}
-
-.cart:hover {
-  transform: scale(1.2);
-}
-
-/* Right align */
-.nav-right {
-  justify-content: flex-end;
-}
-
-/* Wrapper for navbar */
+/* ================= GLOBAL NAV ================= */
 .nav-wrapper {
   position: sticky;
   top: 0;
-  z-index: 999;
-  transition: all 0.3s ease;
+  z-index: 1000;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 14px 28px;
+
+  background: rgba(10, 15, 28, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+
+  font-family: "Inter", sans-serif;
 }
 
-/* Default navbar (your existing style stays same) */
-.nav-ul {
-  transition: all 0.3s ease;
+/* SCROLL EFFECT */
+.nav-wrapper.scrolled {
+  background: rgba(17, 24, 39, 0.97);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
-/* 🔥 SCROLLED STATE (Glass + shadow + shrink) */
-.nav-wrapper.scrolled .nav-ul {
-  min-height: 50px;
-  padding: 10px 25px 10px 80px;
-
-  background: rgba(248, 86, 6, 0.75); /* glass orange */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+/* ================= BRAND ================= */
+.nav-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* 🔥 Logo animation */
-.logo {
-  transition: all 0.3s ease;
+.nav-logo {
+  font-size: 16px;
+  font-weight: 800;
+  color: #60a5fa;
+  letter-spacing: 0.3px;
 }
 
-/* Shrink logo on scroll */
-.logo.logo-small {
-  width: 35px !important;
-  top: 15px !important;
+.nav-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-left:20px
 }
 
-/* ========================= */
-/* 📱 Responsive Design */
-/* ========================= */
-@media (max-width: 992px) {
-  .nav-search {
-    width: 60%;
-  }
+/* ================= MENU ================= */
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
+/* LINKS */
+.nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e2e8f0;
+  text-decoration: none;
+
+  padding: 8px 10px;
+  border-radius: 8px;
+
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(96,165,250,0.12);
+  color: #60a5fa;
+}
+
+/* PRIMARY BUTTON STYLE (LOGIN) */
+.nav-link.primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  padding: 8px 14px;
+}
+
+.nav-link.primary:hover {
+  transform: translateY(-1px);
+}
+
+/* ================= BADGE ================= */
+.nav-badge {
+  background: #2563eb;
+  color: white;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: 6px;
+}
+
+/* ================= LOGOUT ================= */
+.nav-logout-btn {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+
+  padding: 8px 12px;
+  border-radius: 8px;
+
+  font-size: 13px;
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.nav-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ================= HAMBURGER ================= */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-hamburger span {
+  width: 22px;
+  height: 2px;
+  background: #e2e8f0;
+}
+
+/* ================= RESPONSIVE ================= */
 @media (max-width: 768px) {
-  .nav-ul {
+  .nav-hamburger {
+    display: flex;
+  }
+
+  .nav-menu {
+    position: absolute;
+    top: 64px;
+    right: 12px;
+
     flex-direction: column;
     align-items: stretch;
-    padding: 15px;
+
+    width: 240px;
+    padding: 14px;
+
+    background: rgba(17, 24, 39, 0.98);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+
+    display: none;
   }
 
-  .nav-search {
+  .nav-menu.nav-open {
+    display: flex;
+  }
+
+  .nav-link {
     width: 100%;
-    margin: 10px 0;
-  }
-
-  .nav-ul li {
-    margin: 10px 0;
-    text-align: center;
-  }
-
-  .nav-icons {
-    justify-content: center;
-    margin-top: 10px;
-  }
-
-  .cart {
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  .nav-search input {
-    font-size: 12px;
-  }
-
-  .nav-search button {
-    padding: 8px 12px;
   }
 }

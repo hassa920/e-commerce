@@ -1,109 +1,187 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import BASE_URL from "../../api";
+import "./AdminOrder.css";
 
-const AdminOrders = () => {
-    const [orders, setOrders] = useState([]);
+const AdminOrder = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const token = localStorage.getItem("token");
+  // ================= TOKEN =================
+  const getToken = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      return user?.token;
+    } catch {
+      return null;
+    }
+  };
 
-    const fetchOrders = async () => {
-        try {
-            const res = await axios.get(`${BASE_URL}/admin/orders`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setOrders(res.data?.data || []);
-        } catch (err) {
-            console.log("Fetch orders error:", err);
+  const token = getToken();
+
+  // ================= GET ORDERS =================
+  const getOrders = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${BASE_URL}/admin/orders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setOrders(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= ACTION =================
+  const handlePaymentAction = async (orderId, action) => {
+    try {
+      const res = await fetch(
+        `${BASE_URL}/admin/order/payment/${orderId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ action }),
         }
-    };
+      );
 
-    useEffect(() => {
-        fetchOrders();
-    }, []);
+      const data = await res.json();
 
-    const approvePayment = async (order) => {
-        try {
-            await axios.put(
-                `${BASE_URL}/admin/order/payment/${order._id}`,
-                { action: "approve" },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+      if (data.success) {
+        alert(`Payment ${action}ed`);
+        getOrders();
+      }
+    } catch (err) {
+      alert("Error updating payment");
+    }
+  };
 
-            alert("Payment Approved");
-            fetchOrders();
+  useEffect(() => {
+    getOrders();
+  }, []);
 
-        } catch (err) {
-            console.log("Approve error:", err);
-            alert(err?.response?.data?.message || "Error approving payment");
-        }
-    };
+  // ================= LOADING =================
+  if (loading) {
+    return <div className="ao-loading">Loading orders...</div>;
+  }
 
-    const rejectPayment = async (order) => {
-        try {
-            await axios.put(
-                `${BASE_URL}/admin/order/payment/${order._id}`,
-                { action: "reject" },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+  return (
+    <div className="ao-page">
 
-            alert("Payment Rejected");
-            fetchOrders();
+      <h2 className="ao-title">All Orders</h2>
 
-        } catch (err) {
-            console.log("Reject error:", err);
-            alert(err?.response?.data?.message || "Error rejecting payment");
-        }
-    };
+      {orders.length === 0 ? (
+        <div className="ao-empty">No orders found</div>
+      ) : (
+        <div className="ao-list">
 
-    return (
-        <div style={{ padding: "20px" }}>
-            <h2>Admin Orders</h2>
+          {orders.map((order) => {
 
-            {orders.map((order) => (
-                <div
-                    key={order._id}
-                    style={{
-                        border: "1px solid #ccc",
-                        marginBottom: "10px",
-                        padding: "10px",
-                        borderRadius: "8px"
-                    }}
-                >
-                    <p><b>User:</b> {order.userId?.name}</p>
-                    <p><b>Total:</b> {order.totalAmount}</p>
-                    <p><b>Payment Status:</b> {order.paymentStatus}</p>
+            const statusClass =
+              order.paymentStatus === "submitted"
+                ? "ao-pending"
+                : order.paymentStatus === "paid"
+                ? "ao-paid"
+                : "ao-rejected";
 
-                    {order.paymentStatus !== "paid" && (
-                        <>
-                            <button
-                                onClick={() => approvePayment(order)}
-                                style={{
-                                    marginRight: "10px",
-                                    background: "green",
-                                    color: "#fff",
-                                    padding: "5px 10px"
-                                }}
-                            >
-                                Approve
-                            </button>
+            return (
+              <div
+                key={order._id}
+                className={`ao-card ${statusClass}`}
+              >
 
-                            <button
-                                onClick={() => rejectPayment(order)}
-                                style={{
-                                    background: "red",
-                                    color: "#fff",
-                                    padding: "5px 10px"
-                                }}
-                            >
-                                Reject
-                            </button>
-                        </>
-                    )}
+                {/* TOP */}
+                <div className="ao-card-top">
+
+                  <div>
+                    <p className="ao-order-id">
+                      Order #{order._id.slice(-6)}
+                    </p>
+                    <p className="ao-customer">
+                      {order.userId?.name} • {order.userId?.email}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`ao-badge ao-badge-${order.paymentStatus}`}
+                  >
+                    {order.paymentStatus}
+                  </span>
+
                 </div>
-            ))}
+
+                {/* INFO */}
+                <div className="ao-card-info">
+                  <div className="ao-info-row">
+                    <span>Total</span>
+                    <strong>Rs. {order.totalAmount}</strong>
+                  </div>
+
+                  <div className="ao-info-row">
+                    <span>Status</span>
+                    <strong>{order.status}</strong>
+                  </div>
+                </div>
+
+                {/* SCREENSHOT */}
+                {order.paymentScreenshot && (
+                  <div className="ao-screenshot">
+                    <p className="ao-screenshot-label">
+                      Payment Screenshot
+                    </p>
+                    <img
+                      src={order.paymentScreenshot}
+                      className="ao-screenshot-img"
+                      alt="payment"
+                    />
+                  </div>
+                )}
+
+                {/* ACTIONS */}
+                {order.paymentStatus === "submitted" && (
+                  <div className="ao-actions">
+
+                    <button
+                      className="ao-approve-btn"
+                      onClick={() =>
+                        handlePaymentAction(order._id, "approve")
+                      }
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      className="ao-reject-btn"
+                      onClick={() =>
+                        handlePaymentAction(order._id, "reject")
+                      }
+                    >
+                      Reject
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
+            );
+          })}
+
         </div>
-    );
+      )}
+
+    </div>
+  );
 };
 
-export default AdminOrders;
+export default AdminOrder;

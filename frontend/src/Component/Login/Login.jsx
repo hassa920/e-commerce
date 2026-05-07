@@ -1,13 +1,13 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Login.css';
-import BASE_URL from '../../api';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Login.css";
+import BASE_URL from "../../api";
 
 const Login = () => {
   const [form, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
 
   const navigate = useNavigate();
@@ -37,72 +37,121 @@ const Login = () => {
         { email, password },
         {
           headers: { "Content-Type": "application/json" },
-          withCredentials: true
+          withCredentials: true,
         }
       );
 
       const result = response?.data;
+      const token = result?.token || result?.auth;
 
-      // ❌ If login failed
-      if (!result || !result.auth) {
+      if (!result || !token) {
         alert("Invalid credentials");
         return;
       }
 
-      // ✅ Save user and token
-      localStorage.setItem("user", JSON.stringify(result.user));
-      localStorage.setItem("token", result.auth);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          token: result.token,
+          user: result.user,
+        })
+      );
 
-      // 👑 AUTO REDIRECT BASED ON ROLE (YOUR ADDED LOGIC)
       if (result.user.role === "admin") {
-        navigate("/admin");
+        navigate("/admin/dashboard");
       } else {
         navigate("/");
       }
-
     } catch (err) {
-      console.error("Login error:", err);
-      alert("Invalid credentials");
+      alert(err?.response?.data?.message || "Invalid credentials");
     }
   };
 
   return (
-    <div className='login'>
-      <h1 style={{ marginLeft: "25px" }}>Login</h1>
+    <div className="login-page">
 
-      <div className='auth-container'>
+      {/* LEFT INFO PANEL */}
+      <div className="login-left">
+        <div className="brand">⚡ QuickCommerce</div>
 
-        <div className="field-group">
-          <label className="field-label">Email</label>
-          <input
-            type='text'
-            placeholder='Enter email'
-            name='email'
-            value={form.email}
-            onChange={handleChange}
-            className='inputBox'
-          />
+        <h1>
+          Fast, Secure & Reliable <br />
+          Online Shopping
+        </h1>
+
+        <p className="subtitle">
+          Built for modern shoppers in Pakistan who want speed, trust, and
+          simplicity.
+        </p>
+
+        <div className="usp-box">
+          <h3>Why users love us</h3>
+          <ul>
+            <li>⚡ Fast checkout experience</li>
+            <li>🔒 Secure payments (JazzCash / Easypaisa / COD)</li>
+            <li>📦 Reliable order tracking</li>
+            <li>🚚 Smooth delivery system</li>
+          </ul>
         </div>
 
-        <div className="field-group">
-          <label className="field-label">Password</label>
-          <input
-            type='password'
-            placeholder='Enter password'
-            name='password'
-            value={form.password}
-            onChange={handleChange}
-            className='inputBox'
-          />
+        <div className="icp-box">
+          <h3>Perfect for</h3>
+          <p>Students • Small Business Owners • Online Shoppers</p>
         </div>
 
-        <button
-          type='button'
-          onClick={handleLogin}
-          className='appButton'
-        >
-          Login
-        </button>
+        <div className="trust">
+          ✔ Trusted checkout system used by hundreds of users daily
+        </div>
+      </div>
+
+      {/* RIGHT LOGIN CARD */}
+      <div className="login-right">
+
+        <div className="login-card">
+          <h2>Welcome back</h2>
+          <p className="muted">Login to continue shopping</p>
+
+          {/* EMAIL */}
+          <div className="field">
+            <label>Email</label>
+            <input
+              type="text"
+              name="email"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* PASSWORD */}
+          <div className="field">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* LOGIN BUTTON */}
+          <button onClick={handleLogin} className="login-btn">
+            Sign in
+          </button>
+
+          {/* ✅ SIGNUP OPTION (ADDED) */}
+          <div className="signup-link">
+            Don’t have an account?
+            <span onClick={() => navigate("/signup")}>
+              Sign up
+            </span>
+          </div>
+
+          <p className="footer-text">
+            Secure login protected with encrypted authentication
+          </p>
+        </div>
 
       </div>
     </div>

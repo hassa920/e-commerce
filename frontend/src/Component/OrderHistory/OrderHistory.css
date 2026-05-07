@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+.oh-page    { max-width: 720px; margin: 0 auto; padding: 32px 20px 60px; font-family: 'Outfit', sans-serif; }
+.oh-title   { font-size: 26px; font-weight: 700; color: #111; margin: 0 0 24px; }
+.oh-loading { text-align: center; padding: 80px 0; color: #888; font-family: 'Outfit', sans-serif; }
+
+/* ── Empty ── */
+.oh-empty      { text-align: center; padding: 60px 0; }
+.oh-empty-icon { font-size: 48px; margin-bottom: 12px; }
+.oh-empty h3   { font-size: 18px; font-weight: 600; color: #111; margin: 0 0 8px; }
+.oh-empty p    { color: #888; font-size: 14px; margin: 0 0 20px; }
+.oh-browse-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: #111;
+  color: #fff;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── List ── */
+.oh-list { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Card ── */
+.oh-card {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.oh-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.oh-order-id { font-size: 14px; font-weight: 700; color: #111; margin: 0 0 3px; }
+.oh-date     { font-size: 12px; color: #999; margin: 0; }
+
+.oh-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+/* ── Items ── */
+.oh-items  { padding: 12px 18px; display: flex; flex-direction: column; gap: 10px; }
+.oh-item   { display: flex; align-items: center; gap: 12px; }
+.oh-item-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f8f8f8;
+  flex-shrink: 0;
+  border: 1px solid #ebebeb;
+}
+.oh-item-name { font-size: 14px; font-weight: 600; color: #111; margin: 0 0 3px; }
+.oh-item-meta { font-size: 12px; color: #888; margin: 0; }
+
+/* ── Footer ── */
+.oh-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;
+}
+.oh-method { font-size: 12px; color: #888; background: #f0f0f0; padding: 3px 10px; border-radius: 999px; }
+.oh-total  { font-size: 16px; font-weight: 700; color: #111; }
+
+@media (max-width: 480px) {
+  .oh-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+}

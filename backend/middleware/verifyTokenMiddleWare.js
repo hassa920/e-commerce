@@ -2,8 +2,6 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-const jwtKey = process.env.JWT_SECRET;
-
 export function verifyTokenMiddleWare(req, res, next) {
   let token = req.headers["authorization"];
 
@@ -12,20 +10,18 @@ export function verifyTokenMiddleWare(req, res, next) {
   }
 
   try {
-    // ✅ safer split check
     if (!token.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Invalid token format" });
     }
 
     token = token.split(" ")[1];
 
-    const decoded = jwt.verify(token, jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ attach full user safely
-    req.user = decoded.user;
+    // ✅ FIXED HERE
+    req.user = decoded;
 
     next();
-
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
