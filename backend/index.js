@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -17,27 +16,33 @@ dotenv.config();
 
 const app = express();
 
-// ================= CORS =================
-const app = express();
+// ================= MANUAL CORS =================
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "https://e-commerce-frontend-liard-two.vercel.app",
+    "https://e-commerce-frontend-9wo6uz2vh-hassam-tariqs-projects.vercel.app"
+  ];
 
-// ================= CORS =================
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://e-commerce-frontend-liard-two.vercel.app",
-      "https://e-commerce-frontend-9wo6uz2vh-hassam-tariqs-projects.vercel.app"
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+  const origin = req.headers.origin;
 
-// ================= PREFLIGHT — MUST BE BEFORE EVERYTHING =================
-app.options("*", cors());
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 app.use(express.json());
+
 // ================= REQUEST LOGGER =================
 app.use((req, res, next) => {
   console.log("➡️", req.method, req.url);
