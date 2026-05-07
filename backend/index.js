@@ -18,18 +18,29 @@ dotenv.config();
 const app = express();
 
 // ================= CORS =================
-cors({
-  origin: [
-    "http://localhost:3000",
-    "https://e-commerce-frontend-liard-two.vercel.app",
-    "https://e-commerce-frontend-9wo6uz2vh-hassam-tariqs-projects.vercel.app"
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-})
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://e-commerce-frontend-liard-two.vercel.app",
+      "https://e-commerce-frontend-9wo6uz2vh-hassam-tariqs-projects.vercel.app"
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
+
+// ================= PREFLIGHT OPTIONS =================
+app.options("*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
+});
 
 // ================= REQUEST LOGGER =================
 app.use((req, res, next) => {
