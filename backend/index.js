@@ -18,17 +18,16 @@ dotenv.config();
 const app = express();
 
 // ================= CORS =================
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://e-commerce-frontend-liard-two.vercel.app"  // ✅ Replace with your actual frontend URL
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+cors({
+  origin: [
+    "http://localhost:3000",
+    "https://e-commerce-frontend-liard-two.vercel.app",
+    "https://e-commerce-frontend-9wo6uz2vh-hassam-tariqs-projects.vercel.app"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+})
 
 app.use(express.json());
 
