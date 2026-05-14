@@ -28,7 +28,14 @@ const paymentStorage = new CloudinaryStorage({
 });
 
 // ✅ EXISTING upload (unchanged)
-const Upload = multer({ storage });
+const Upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+  // 🔥 THIS FIXES BODY PARSING ISSUES
+  preservePath: false,
+});
 
 // ✅ NEW upload for payments
 export const PaymentUpload = multer({ storage: paymentStorage });

@@ -3,12 +3,27 @@
 .cart-page   { max-width: 860px; margin: 0 auto; padding: 32px 20px 60px; font-family: 'Outfit', sans-serif; }
 .cart-loading{ text-align: center; padding: 80px 0; color: #888; }
 
-.cart-header     { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 8px; }
+.cart-header     { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
 .cart-title-row  { display: flex; align-items: center; gap: 10px; }
 .cart-title-row h1{ font-size: 26px; font-weight: 700; color: #111; margin: 0; }
 .cart-badge      { background: #111; color: #fff; font-size: 12px; padding: 3px 10px; border-radius: 999px; font-weight: 600; }
+
+.cart-header-actions { display: flex; align-items: center; gap: 14px; }
 .continue-link   { font-size: 14px; color: #555; text-decoration: none; font-weight: 500; }
 .continue-link:hover{ color: #111; }
+.clear-cart-btn {
+  background: none;
+  border: 1px solid #e5e5e5;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, border-color .15s;
+}
+.clear-cart-btn:hover { background: #fee2e2; border-color: #fecaca; }
 
 /* ── Empty ── */
 .cart-empty      { text-align: center; padding: 60px 0; }
@@ -19,15 +34,18 @@
 
 /* ── Cart list ── */
 .cart-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+
 .cart-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 68px 1fr auto auto auto;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   background: #fff;
   border: 1px solid #ebebeb;
   border-radius: 12px;
   padding: 14px 16px;
 }
+.cart-item-img { width: 68px; height: 68px; }
 .cart-item-img img {
   width: 68px;
   height: 68px;
@@ -35,19 +53,21 @@
   object-fit: cover;
   background: #f8f8f8;
   border: 1px solid #ebebeb;
+  display: block;
 }
-.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-info { min-width: 0; }
 .cart-item-name { font-size: 14px; font-weight: 600; color: #111; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cart-item-meta { font-size: 12px; color: #999; margin: 0 0 4px; }
+.cart-item-meta { font-size: 12px; color: #999; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cart-item-price{ font-size: 14px; font-weight: 500; color: #555; margin: 0; }
 
-/* ── FIXED: Qty control ── */
+/* ── Qty control ── */
 .cart-qty-control {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   border: 1.5px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .cart-qty-control button {
   background: none;
@@ -58,9 +78,19 @@
   cursor: pointer;
   color: #333;
   transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .cart-qty-control button:hover { background: #f4f4f4; }
-.cart-qty-control span { padding: 0 10px; font-size: 14px; font-weight: 600; color: #111; }
+.cart-qty-control span {
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  min-width: 32px;
+  text-align: center;
+}
 
 .cart-item-subtotal { font-size: 14px; font-weight: 700; color: #111; white-space: nowrap; min-width: 90px; text-align: right; }
 
@@ -70,9 +100,10 @@
   color: #ccc;
   font-size: 15px;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 6px 8px;
   border-radius: 6px;
   transition: color 0.15s, background 0.15s;
+  line-height: 1;
 }
 .cart-remove-btn:hover { color: #ef4444; background: #fee2e2; }
 
@@ -141,6 +172,16 @@
 
 /* ── Mobile ── */
 @media (max-width: 580px) {
-  .cart-item { flex-wrap: wrap; }
-  .cart-item-subtotal { width: 100%; text-align: left; }
+  .cart-item {
+    grid-template-columns: 60px 1fr auto;
+    grid-template-areas:
+      "img info remove"
+      "img qty  subtotal";
+    gap: 10px 12px;
+  }
+  .cart-item-img       { grid-area: img; }
+  .cart-item-info      { grid-area: info; }
+  .cart-qty-control    { grid-area: qty; justify-self: start; }
+  .cart-item-subtotal  { grid-area: subtotal; text-align: right; min-width: 0; }
+  .cart-remove-btn     { grid-area: remove; justify-self: end; align-self: start; }
 }

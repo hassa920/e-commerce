@@ -60,7 +60,7 @@ const Login = () => {
       if (result.user.role === "admin") {
         navigate("/admin/dashboard");
       } else {
-        navigate("/");
+        navigate("/products");
       }
     } catch (err) {
       alert(err?.response?.data?.message || "Invalid credentials");

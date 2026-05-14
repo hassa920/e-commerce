@@ -1,20 +1,21 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BASE_URL from "../../api";
 import "./Cart.css";
 import { useToast } from "../Toast/Toast";
 
 const Cart = () => {
   const { show } = useToast();
+  const navigate = useNavigate();
 
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [placingOrder, setPlacingOrder] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState("COD");
 
   // ================= SAFE TOKEN =================
   let token = null;
-
   try {
     const stored = JSON.parse(localStorage.getItem("user"));
     token = stored?.token;
@@ -28,9 +29,7 @@ const Cart = () => {
   const fetchCart = useCallback(async () => {
     try {
       setLoading(true);
-
       const res = await axios.get(`${BASE_URL}/cart`, { headers });
-
       setCartItems(res.data?.data || []);
     } catch (err) {
       console.log("Cart fetch error:", err);
@@ -38,15 +37,13 @@ const Cart = () => {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // ================= REMOVE ITEM =================
   const handleRemove = async (productId) => {
     try {
-      await axios.delete(`${BASE_URL}/cart/remove/${productId}`, {
-        headers,
-      });
-
+      await axios.delete(`${BASE_URL}/cart/remove/${productId}`, { headers });
       show("Item removed", "success");
       window.dispatchEvent(new Event("cartUpdated"));
       fetchCart();
@@ -58,14 +55,12 @@ const Cart = () => {
   // ================= UPDATE QUANTITY =================
   const handleQtyChange = async (productId, newQty) => {
     if (newQty < 1) return;
-
     try {
       await axios.put(
         `${BASE_URL}/cart/update/${productId}`,
         { quantity: newQty },
         { headers }
       );
-
       window.dispatchEvent(new Event("cartUpdated"));
       fetchCart();
     } catch (err) {
@@ -73,13 +68,11 @@ const Cart = () => {
     }
   };
 
-  // ================= CLEAR CART (NEW API) =================
+  // ================= CLEAR CART =================
   const handleClearCart = async () => {
     if (!window.confirm("Clear entire cart?")) return;
-
     try {
       await axios.delete(`${BASE_URL}/cart/clear`, { headers });
-
       show("Cart cleared", "success");
       window.dispatchEvent(new Event("cartUpdated"));
       fetchCart();
@@ -90,7 +83,20 @@ const Cart = () => {
 
   // ================= CHECKOUT =================
   const handleCheckout = async () => {
+    if (!token) {
+      show("Please login to place an order", "error");
+      navigate("/login");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      show("Your cart is empty", "error");
+      return;
+    }
+
     try {
+      setPlacingOrder(true);
+
       const res = await axios.post(
         `${BASE_URL}/order/checkout`,
         { paymentMethod: selectedMethod },
@@ -99,14 +105,45 @@ const Cart = () => {
 
       const order = res.data?.data;
 
+      if (!order?._id) {
+        show("Order could not be created", "error");
+        return;
+      }
+
+      // cart is cleared on backend, sync UI everywhere
+      window.dispatchEvent(new Event("cartUpdated"));
+
       if (selectedMethod === "COD") {
         show("Order placed successfully!", "success");
-        fetchCart();
+        await fetchCart();
+        // send user to their orders page
+        navigate(`/my-orders`);
       } else {
-        window.location.href = `/payment/${order._id}`;
+        // JazzCash / Easypaisa → upload payment screenshot screen
+        show("Order created. Please complete the payment.", "success");
+        navigate(`/payment/${order._id}`);
       }
     } catch (err) {
+      console.log("Checkout error:", err);
       show(err?.response?.data?.message || "Checkout failed", "error");
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
+  // ================= CANCEL ORDER (utility, optional reuse) =================
+  // Kept here in case you want to expose a "cancel last order" action later.
+  // eslint-disable-next-line no-unused-vars
+  const handleCancelOrder = async (orderId) => {
+    try {
+      await axios.put(
+        `${BASE_URL}/order/cancel/${orderId}`,
+        {},
+        { headers }
+      );
+      show("Order cancelled", "success");
+    } catch (err) {
+      show(err?.response?.data?.message || "Failed to cancel order", "error");
     }
   };
 
@@ -114,18 +151,15 @@ const Cart = () => {
   const getTotal = () =>
     cartItems.reduce(
       (sum, item) =>
-        sum +
-        (Number(item.productId?.price) || 0) * item.quantity,
+        sum + (Number(item.productId?.price) || 0) * item.quantity,
       0
     );
 
   // ================= INIT =================
   useEffect(() => {
     fetchCart();
-
     const sync = () => fetchCart();
     window.addEventListener("cartUpdated", sync);
-
     return () => window.removeEventListener("cartUpdated", sync);
   }, [fetchCart]);
 
@@ -136,15 +170,12 @@ const Cart = () => {
 
   return (
     <div className="cart-page">
-
       {/* HEADER */}
       <div className="cart-header">
         <div className="cart-title-row">
           <h1>My Cart</h1>
           {cartItems.length > 0 && (
-            <span className="cart-badge">
-              {cartItems.length} items
-            </span>
+            <span className="cart-badge">{cartItems.length} items</span>
           )}
         </div>
 
@@ -177,7 +208,6 @@ const Cart = () => {
           <div className="cart-list">
             {cartItems.map((item) => (
               <div className="cart-item" key={item._id}>
-
                 {/* IMAGE */}
                 <div className="cart-item-img">
                   <img
@@ -191,18 +221,13 @@ const Cart = () => {
 
                 {/* INFO */}
                 <div className="cart-item-info">
-                  <p className="cart-item-name">
-                    {item.productId?.name}
-                  </p>
+                  <p className="cart-item-name">{item.productId?.name}</p>
                   <p className="cart-item-meta">
-                    {item.productId?.company} ·{" "}
-                    {item.productId?.category}
+                    {item.productId?.company} · {item.productId?.category}
                   </p>
                   <p className="cart-item-price">
                     Rs.{" "}
-                    {Number(
-                      item.productId?.price
-                    ).toLocaleString()}
+                    {Number(item.productId?.price).toLocaleString()}
                   </p>
                 </div>
 
@@ -218,9 +243,7 @@ const Cart = () => {
                   >
                     −
                   </button>
-
                   <span>{item.quantity}</span>
-
                   <button
                     onClick={() =>
                       handleQtyChange(
@@ -237,17 +260,14 @@ const Cart = () => {
                 <p className="cart-item-subtotal">
                   Rs.{" "}
                   {(
-                    Number(item.productId?.price) *
-                    item.quantity
+                    Number(item.productId?.price) * item.quantity
                   ).toLocaleString()}
                 </p>
 
                 {/* REMOVE */}
                 <button
                   className="cart-remove-btn"
-                  onClick={() =>
-                    handleRemove(item.productId?._id)
-                  }
+                  onClick={() => handleRemove(item.productId?._id)}
                 >
                   ✕
                 </button>
@@ -257,7 +277,6 @@ const Cart = () => {
 
           {/* SUMMARY */}
           <div className="cart-summary">
-
             <div className="summary-row">
               <span>Subtotal ({cartItems.length} items)</span>
               <span>Rs. {getTotal().toLocaleString()}</span>
@@ -275,9 +294,7 @@ const Cart = () => {
 
             {/* PAYMENT */}
             <div className="payment-method-wrapper">
-              <p className="payment-method-label">
-                Payment Method
-              </p>
+              <p className="payment-method-label">Payment Method</p>
 
               <div className="payment-options">
                 {[
@@ -303,23 +320,15 @@ const Cart = () => {
                   <div
                     key={m.value}
                     className={`payment-option ${
-                      selectedMethod === m.value
-                        ? "active"
-                        : ""
+                      selectedMethod === m.value ? "active" : ""
                     }`}
                     onClick={() => setSelectedMethod(m.value)}
                   >
-                    <span className="payment-option-icon">
-                      {m.icon}
-                    </span>
+                    <span className="payment-option-icon">{m.icon}</span>
 
                     <div className="payment-option-text">
-                      <span className="payment-option-title">
-                        {m.title}
-                      </span>
-                      <span className="payment-option-sub">
-                        {m.sub}
-                      </span>
+                      <span className="payment-option-title">{m.title}</span>
+                      <span className="payment-option-sub">{m.sub}</span>
                     </div>
 
                     <div className="payment-option-radio">
@@ -336,8 +345,13 @@ const Cart = () => {
             <button
               className="checkout-btn"
               onClick={handleCheckout}
+              disabled={placingOrder}
             >
-              Proceed to Checkout
+              {placingOrder
+                ? "Placing order…"
+                : selectedMethod === "COD"
+                ? "Place Order"
+                : "Proceed to Payment"}
             </button>
           </div>
         </>

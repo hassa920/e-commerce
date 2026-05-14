@@ -37,23 +37,38 @@ const ProductList = () => {
     }
   };
 
-  const handleAddToCart = async (productId) => {
-    try {
-      if (!token) return show("Please login first", "error");
+ const handleAddToCart = async (productId) => {
+  try {
+    if (!token) {
+      return show("Please login first", "error");
+    }
 
-      await axios.post(
-        `${BASE_URL}/cart/add`,
-        { productId, quantity: 1 },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    const res = await axios.post(
+      `${BASE_URL}/cart/add`,
+      {
+        productId,
+        quantity: 1,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
+    if (res.data.success) {
       window.dispatchEvent(new Event("cartUpdated"));
       show("Added to cart!", "success");
-    } catch (err) {
-      show(err?.response?.data?.message || "Failed", "error");
     }
-  };
+  } catch (err) {
+    console.log(err);
 
+    show(
+      err?.response?.data?.message || "Failed to add to cart",
+      "error"
+    );
+  }
+};
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
 
@@ -64,7 +79,7 @@ const ProductList = () => {
 
       show("Deleted successfully", "success");
       getProducts();
-    } catch (err) {
+    } catch {
       show("Delete failed", "error");
     }
   };
@@ -73,90 +88,141 @@ const ProductList = () => {
     getProducts();
   }, []);
 
-  if (loading) return <h2 className="loading-text">Loading...</h2>;
+  if (loading) {
+    return (
+      <div className="loading-wrapper">
+        <div className="loading-ring">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <p className="loading-text">Loading products…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="product-page">
 
-      <h1 className="page-title">🛍 Products</h1>
+      {/* ── PAGE HEADER ── */}
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">All Products</h1>
+          <p className="page-sub">Discover our latest collection</p>
+        </div>
+        <span className="product-count-pill">
+          <span className="count-number">{products.length}</span>
+          <span className="count-label">items</span>
+        </span>
+      </div>
 
+      {/* ── PRODUCT GRID ── */}
       <div className="product-grid">
-
         {products.length === 0 ? (
-          <p className="no-products">No products found</p>
+          <div className="empty-state">
+            <div className="empty-icon">🛍️</div>
+            <p className="empty-title">No products found</p>
+            <p className="empty-sub">Check back soon for new arrivals</p>
+          </div>
         ) : (
           products.map((product) => (
             <div className="product-card" key={product._id}>
 
-              <Link to={`/product/${product._id}`} className="card-image-link">
-                <div className="card-image-wrapper">
+              {/* ── IMAGE ── */}
+              <Link to={`/product/${product._id}`} className="card-img-link">
+                <div className="card-img-wrap">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="card-image"
+                    className="card-img"
                   />
+                  <span className={`stock-ribbon ${product.stock > 0 ? "ribbon-in" : "ribbon-out"}`}>
+                    {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                  </span>
+                  <span className="cat-chip">{product.category}</span>
                 </div>
               </Link>
 
+              {/* ── BODY ── */}
               <div className="card-body">
 
-                <Link to={`/product/${product._id}`} className="product-name-link">
-                  <p className="product-name">{product.name}</p>
-                </Link>
+                {/* Brand */}
+                <div className="field-block">
+                  <label className="field-label">Brand</label>
+                  <p className="brand-value">{product.company}</p>
+                </div>
 
-                <p className="product-meta">
-                  {product.company} • {product.category}
-                </p>
+                {/* Product Name */}
+                <div className="field-block">
+                  <label className="field-label">Product Name</label>
+                  <Link to={`/product/${product._id}`} className="name-link">
+                    <h2 className="product-name">{product.name}</h2>
+                  </Link>
+                </div>
 
-                <p className="product-price">
-                  Rs {Number(product.price).toLocaleString()}
-                </p>
+                {/* Description */}
+                <div className="field-block">
+                  <label className="field-label">Description</label>
+                  <p className="product-desc">{product.description}</p>
+                </div>
 
-                <span
-                  className={`stock-badge ${
-                    product.stock > 0 ? "in-stock" : "out-of-stock"
-                  }`}
-                >
-                  {product.stock > 0 ? "In Stock" : "Out of Stock"}
-                </span>
+                {/* Category + Stock */}
+                <div className="meta-row">
+                  <div className="meta-item">
+                    <label className="field-label">Category</label>
+                    <span className="meta-val">{product.category}</span>
+                  </div>
+                  <div className="meta-divider" />
+                  <div className="meta-item">
+                    <label className="field-label">Stock</label>
+                    <span className={`meta-stock ${product.stock > 0 ? "s-in" : "s-out"}`}>
+                      {product.stock > 0 ? `${product.stock} units` : "Unavailable"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Price */}
+                <div className="price-row">
+                  <label className="field-label">Price</label>
+                  <span>
+                    Rs {Number(product.price).toLocaleString()}
+                  </span>
+                </div>
 
               </div>
 
-              <div className="card-actions">
-
+              {/* ── ACTIONS ── */}
+              <div className="card-footer">
                 {user?.role !== "admin" && (
                   <button
-                    className="btn btn-cart"
+                    className="btn-cart"
                     onClick={() => handleAddToCart(product._id)}
+                    disabled={product.stock === 0}
                   >
-                    🛒 Add to Cart
+                    <span className="btn-icon">🛒</span>
+                    {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
                   </button>
                 )}
 
                 {user?.role === "admin" && (
-                  <>
-                    <Link
-                      to={`/update/${product._id}`}
-                      className="btn btn-update"
-                    >
-                      ✏️ Update
+                  <div className="admin-btns">
+                    <Link to={`/update/${product._id}`} className="btn-update">
+                      <span className="btn-icon">✏️</span> Update
                     </Link>
-
-                    <button
-                      className="btn btn-delete"
+                    <Link
+                      className="btn-delete"
                       onClick={() => handleDelete(product._id)}
                     >
-                      🗑 Delete
-                    </button>
-                  </>
+                      <span className="btn-icon">🗑️</span> Delete
+                    </Link>
+                  </div>
                 )}
-
               </div>
 
             </div>
           ))
         )}
-
       </div>
     </div>
   );

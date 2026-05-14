@@ -6,9 +6,10 @@ import { useToast } from '../Toast/Toast';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
-    const { id }        = useParams();
-    const navigate      = useNavigate();
-    const { show }      = useToast();
+    const { id }      = useParams();
+    const navigate    = useNavigate();
+    const { show }    = useToast();
+
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [qty, setQty]         = useState(1);
@@ -25,7 +26,8 @@ const ProductDetail = () => {
 
     const handleAddToCart = async () => {
         try {
-            await axios.post(`${BASE_URL}/cart/add`,
+            await axios.post(
+                `${BASE_URL}/cart/add`,
                 { productId: id, quantity: qty },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -36,48 +38,120 @@ const ProductDetail = () => {
         }
     };
 
-    if (loading) return <div className="pd-loading">Loading…</div>;
+    if (loading) {
+        return (
+            <div className="pd-loading-wrapper">
+                <div className="pd-loading-ring">
+                    <div></div><div></div><div></div><div></div>
+                </div>
+                <p className="pd-loading-text">Loading product…</p>
+            </div>
+        );
+    }
+
     if (!product) return null;
 
     return (
         <div className="pd-page">
-            <Link to="/" className="pd-back">← Back to products</Link>
 
+            {/* ── BACK LINK ── */}
+            <Link to="/" className="pd-back">
+                <span className="pd-back-arrow">←</span> Back to Products
+            </Link>
+
+            {/* ── MAIN GRID ── */}
             <div className="pd-grid">
-                {/* ── Image ── */}
+
+                {/* ── IMAGE COLUMN ── */}
                 <div className="pd-image-col">
-                    <img
-                        src={product.image || 'https://via.placeholder.com/500x400?text=No+Image'}
-                        alt={product.name}
-                        className="pd-image"
-                    />
+                    <div className="pd-image-wrap">
+                        <img
+                            src={product.image || 'https://via.placeholder.com/500x400?text=No+Image'}
+                            alt={product.name}
+                            className="pd-image"
+                        />
+                        {/* Stock badge over image */}
+                        <span className={`pd-img-badge ${product.stock > 0 ? 'badge-in' : 'badge-out'}`}>
+                            {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                        </span>
+                    </div>
+
+                    {/* Thumbnail strip placeholder for future images */}
+                    <div className="pd-img-meta">
+                        <span className="pd-img-meta-text">Product Image</span>
+                    </div>
                 </div>
 
-                {/* ── Info ── */}
+                {/* ── INFO COLUMN ── */}
                 <div className="pd-info-col">
-                    <p className="pd-category">{product.category}</p>
-                    <h1 className="pd-name">{product.name}</h1>
-                    <p className="pd-company">{product.company}</p>
-                    <p className="pd-price">Rs. {Number(product.price).toLocaleString()}</p>
 
+                    {/* Category + Company chips */}
+                    <div className="pd-chips">
+                        <span className="pd-chip-cat">{product.category}</span>
+                        <span className="pd-chip-brand">{product.company}</span>
+                    </div>
+
+                    {/* Product Name */}
+                    <div className="pd-field-block">
+                        <label className="pd-field-label">Product Name</label>
+                        <h1 className="pd-name">{product.name}</h1>
+                    </div>
+
+                    {/* Price */}
+                    <div className="pd-field-block">
+                        <label className="pd-field-label">Price</label>
+                        <p>Rs. {Number(product.price).toLocaleString()}</p>
+                    </div>
+
+                    {/* Description */}
                     {product.description && (
-                        <p className="pd-description">{product.description}</p>
+                        <div className="pd-field-block">
+                            <label className="pd-field-label">Description</label>
+                            <p className="pd-description">{product.description}</p>
+                        </div>
                     )}
+
+                    {/* Brand */}
+                    <div className="pd-field-block">
+                        <label className="pd-field-label">Brand</label>
+                        <p className="pd-meta-val">{product.company}</p>
+                    </div>
+
+                    {/* Category */}
+                    <div className="pd-field-block">
+                        <label className="pd-field-label">Category</label>
+                        <p className="pd-meta-val">{product.category}</p>
+                    </div>
 
                     {/* Stock */}
                     {product.stock !== undefined && (
-                        <span className={`pd-stock ${product.stock > 0 ? 'in' : 'out'}`}>
-                            {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                        </span>
+                        <div className="pd-field-block">
+                            <label className="pd-field-label">Availability</label>
+                            <span className={`pd-stock-badge ${product.stock > 0 ? 'stock-in' : 'stock-out'}`}>
+                                <span className="stock-dot"></span>
+                                {product.stock > 0 ? `${product.stock} units available` : 'Out of stock'}
+                            </span>
+                        </div>
                     )}
 
+                    <div className="pd-divider" />
+
+                    {/* ── USER ACTIONS ── */}
                     {user?.role === 'user' && (
                         <div className="pd-actions">
-                            {/* Quantity */}
-                            <div className="pd-qty">
-                                <button onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
-                                <span>{qty}</span>
-                                <button onClick={() => setQty(q => Math.min(product.stock || 99, q + 1))}>+</button>
+                            <div className="pd-qty-block">
+                                <label className="pd-field-label">Quantity</label>
+                                <div className="pd-qty">
+                                    <button
+                                        className="pd-qty-btn"
+                                        onClick={() => setQty(q => Math.max(1, q - 1))}
+                                    >−</button>
+                                    <span className="pd-qty-val">{qty}</span>
+                                    <button
+                                        className="pd-qty-btn"
+                                        onClick={() => setQty(q => Math.min(product.stock || 99, q + 1))}
+                                    >+</button>
+                                </div>
                             </div>
 
                             <button
@@ -85,16 +159,21 @@ const ProductDetail = () => {
                                 onClick={handleAddToCart}
                                 disabled={product.stock === 0}
                             >
-                                🛒 Add to Cart
+                                <span className="pd-btn-icon">🛒</span>
+                                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                             </button>
                         </div>
                     )}
 
+                    {/* ── ADMIN ACTIONS ── */}
                     {user?.role === 'admin' && (
                         <div className="pd-actions">
-                            <Link to={`/update/${id}`} className="pd-admin-btn update">✏️ Edit Product</Link>
+                            <Link to={`/update/${id}`} className="pd-admin-update">
+                                <span className="pd-btn-icon">✏️</span> Edit Product
+                            </Link>
                         </div>
                     )}
+
                 </div>
             </div>
         </div>

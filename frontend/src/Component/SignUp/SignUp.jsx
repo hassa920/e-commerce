@@ -66,7 +66,7 @@ const SignUp = () => {
       if (result.user.role === "admin") {
         navigate("/admin/dashboard");
       } else {
-        navigate("/");
+        navigate("/products");
       }
     } catch (err) {
       const message =

@@ -113,6 +113,16 @@ const Nav = () => {
                 isActive ? "nav-link active" : "nav-link"
               }
             >
+              🏠 Home
+            </NavLink>
+
+            <NavLink
+              to="/products"
+              onClick={closeMenu}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
               🛍 Products
             </NavLink>
 
@@ -204,6 +214,16 @@ const Nav = () => {
         ) : (
           <>
             {/* GUEST ROUTES */}
+            <NavLink
+              to="/"
+              onClick={closeMenu}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              Home
+            </NavLink>
+
             <NavLink
               to="/signup"
               onClick={closeMenu}

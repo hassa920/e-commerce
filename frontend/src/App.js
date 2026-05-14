@@ -20,6 +20,7 @@ import AdminRoute from './AdminRoute';
 import Notifications from './Component/Notifications/Notifications.jsx';
 import WhatsAppButton from './Component/WhatsAppButton/WhatsAppButton.jsx';
 import { ToastProvider } from './Component/Toast/Toast.jsx';
+import HomePage from './Component/HomePage/HomePage.jsx';
 
 function App() {
 
@@ -42,12 +43,13 @@ function App() {
             <Routes>
 
               {/* PUBLIC */}
+              <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
 
               {/* PRIVATE USER ROUTES */}
               <Route element={<PrivateComponent />}>
-                <Route path="/" element={<ProductList />} />
+                <Route path="/products" element={<ProductList />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/orders" element={<OrderHistory />} />

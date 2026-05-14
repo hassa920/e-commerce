@@ -72,8 +72,7 @@ const OrderHistory = () => {
         <div className="oh-list">
           {orders.map((order) => {
             const status =
-              STATUS_COLOR[order.paymentStatus] ||
-              STATUS_COLOR.pending;
+              STATUS_COLOR[order.paymentStatus] || STATUS_COLOR.pending;
 
             return (
               <div className="oh-card" key={order._id}>
@@ -126,10 +125,10 @@ const OrderHistory = () => {
                   ))}
                 </div>
 
-                {/* PAYMENT SCREENSHOT (FIXED) */}
+                {/* PAYMENT SCREENSHOT */}
                 {order.paymentScreenshot && (
                   <div className="oh-screenshot">
-                    <p className="oh-screenshot-label" style={{ marginLeft: "20px" }}>
+                    <p className="oh-screenshot-label">
                       Payment Proof
                     </p>
                     <img
@@ -137,6 +136,29 @@ const OrderHistory = () => {
                       alt="payment proof"
                       className="oh-screenshot-img"
                     />
+                  </div>
+                )}
+
+                {/* 💥 NOTIFICATIONS (NEW FEATURE) */}
+                {order.notifications?.length > 0 && (
+                  <div className="oh-notifications">
+                    <h4 style={{ marginLeft: "20px", marginTop: "10px" }}>
+                      Notifications
+                    </h4>
+
+                    {order.notifications.map((note, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          marginLeft: "20px",
+                          fontSize: "13px",
+                          color: "#444",
+                          padding: "4px 0",
+                        }}
+                      >
+                        • {note.message}
+                      </div>
+                    ))}
                   </div>
                 )}
 

@@ -71,17 +71,15 @@ const AddProduct = () => {
       setLoading(true);
 
       const formData = new FormData();
-
       Object.entries(form).forEach(([key, value]) => {
-        if (value !== '') formData.append(key, value);
+        formData.append(key, value === undefined || value === null ? "" : value);
       });
-
       formData.append('userId', user._id);
       formData.append('image', image);
 
       await axios.post(`${BASE_URL}/add-product`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          // 'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
         }
       });
